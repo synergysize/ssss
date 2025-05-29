@@ -107,6 +107,9 @@ const loadWalletData = () => {
     // Parse the CSV data
     let fartcoinData = parseCSV(fartcoinCSV);
     let goatTokenData = parseCSV(goatTokenCSV);
+    console.log("🐐 GOAT CSV RAW:\n", goatTokenCSV.slice(0, 300));
+    console.log("Parsed GOAT entries:", goatTokenData.length);
+
     
     // Filter out any entries without an address or amount
     fartcoinData = fartcoinData.filter(entry => entry.address && !isNaN(entry.amount));
