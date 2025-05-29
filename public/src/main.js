@@ -814,87 +814,68 @@ if (sharedPoints.length === 0 || fartcoinPoints.length === 0 || goatTokenPoints.
   console.error('ERROR: Missing wallet data for visualization!');
 }
 
-// Function to create a Level 2 cluster forming a hollow sphere around a Level 1 wallet
-function createLevel2Cluster(parentPosition, parentScale, parentColor, parentWalletData) {
-  // Create a group to hold the hollow spherical shell
+const createLevel2Cluster = (parentPosition, parentScale, parentColor, parentWalletData) => {
   const sphericalShellGroup = new THREE.Group();
-  
-  // Create central parent node that will sit at the center of the sphere
   const centralNodeMaterial = new THREE.SpriteMaterial({
     map: pointTexture,
-    color: parentColor, // Use parent color for visibility
+    color: parentColor,
     transparent: true,
     opacity: 0.9,
     blending: THREE.AdditiveBlending
   });
-  
+
   const centralNode = new THREE.Sprite(centralNodeMaterial);
-  centralNode.scale.set(parentScale * 0.5, parentScale * 0.5, 1); // Make center node visible
-  centralNode.position.set(0, 0, 0); // Center point of the sphere
-  
-  // Set userdata including the fact this is a parent node (Level 1 Wallet)
-  centralNode.userData = { 
+  centralNode.scale.set(parentScale * 0.5, parentScale * 0.5, 1);
+  centralNode.position.set(0, 0, 0);
+  centralNode.userData = {
     isLevel1Wallet: true,
     walletData: parentWalletData
   };
-  
+
   sphericalShellGroup.add(centralNode);
-  
-  // Define the number of wallet points to distribute on the sphere - increased to 200 per spec
-  const numPoints = 200; // Increased from ~10-12 to 200 for full dataset visualization
-  
-  // Optimize hollow sphere size to prevent overlap between adjacent spheres
-  const shellRadius = parentScale * 2.8; // Reduced from 3.0 to 2.8 to prevent sphere overlap
-  // We're reducing the shell radius slightly while increasing parent node spacing,
-  // which will result in distinct separation between the hollow spheres
-  
-  // Create evenly distributed points on the sphere surface using Fibonacci sphere distribution
-  // This algorithm produces a more uniform distribution for larger point counts
+
+  // 🔥 LOWERED POINT COUNT TO REDUCE CPU LOAD
+  const numPoints = 20;
+
+  const shellRadius = parentScale * 2.8;
+
   for (let i = 0; i < numPoints; i++) {
-    // Use Fibonacci sphere distribution for perfectly even spacing across the sphere surface
-    // This works better than previous approach for 200 points
     const phi = Math.acos(1 - 2 * (i + 0.5) / numPoints);
-    const theta = Math.PI * 2 * i * (1 + Math.sqrt(5)); // Golden ratio-based angle
-    
-    // Convert spherical coordinates to Cartesian coordinates
+    const theta = Math.PI * 2 * i * (1 + Math.sqrt(5));
     const x = shellRadius * Math.sin(phi) * Math.cos(theta);
     const z = shellRadius * Math.sin(phi) * Math.sin(theta);
     const yPos = shellRadius * Math.cos(phi);
-    
-    // Create wallet node material with adjusted opacity for larger point count
+
     const walletNodeMaterial = new THREE.SpriteMaterial({
       map: pointTexture,
-      color: new THREE.Color(parentColor).lerp(new THREE.Color(0xffffff), 0.3), // Slightly lighter version
+      color: new THREE.Color(parentColor).lerp(new THREE.Color(0xffffff), 0.3),
       transparent: true,
-      opacity: 0.7, // Reduced from 0.8 to prevent visual crowding with 200 points
+      opacity: 0.7,
       blending: THREE.AdditiveBlending
     });
-    
-    // Create the wallet sprite
+
     const walletNode = new THREE.Sprite(walletNodeMaterial);
-    const walletScale = parentScale * 0.18; // Further reduced from 0.2 to 0.18 for better differentiation between spheres
+    const walletScale = parentScale * 0.18;
     walletNode.scale.set(walletScale, walletScale, 1);
     walletNode.position.set(x, yPos, z);
-    
-    // Add to shell group
+
     sphericalShellGroup.add(walletNode);
-    
-    // Store original position, wallet data, and set isLevel1Wallet=false to mark this as a child node
+
     walletNode.userData = {
       originalPosition: new THREE.Vector3(x, yPos, z),
       shellRadius: shellRadius,
       originalScale: walletScale,
       originalColor: walletNodeMaterial.color.getStyle(),
-      isLevel1Wallet: false, // Explicitly mark as NOT a Level 1 wallet
-      walletData: parentWalletData // Copy wallet data from parent
+      isLevel1Wallet: false,
+      walletData: parentWalletData
     };
   }
-  
-  // Position the entire shell group at parent position
+
   sphericalShellGroup.position.copy(parentPosition);
-  
+
   return sphericalShellGroup;
-}
+};
+
 
 // Function to create a wallet point cloud with sprites
 function createWalletPointCloud(pointsArray, groupName, color = 0xffffff) {
