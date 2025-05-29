@@ -8,6 +8,7 @@
 // Simple CSV parser function that handles the structure of our files
 const parseCSV = (csvText) => {
   const lines = csvText.trim().split('\n');
+  lines[0] = lines[0].replace('\r', '').replace('\uFEFF', ''); // remove CR and BOM
   const headers = lines[0].split(',');
   
   return lines.slice(1).map(line => {
