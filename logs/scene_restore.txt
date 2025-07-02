@@ -1,0 +1,38 @@
+## Scene Restoration Notes
+
+### Issue Identified
+The black screen bug was caused by two main issues:
+
+1. Missing CSS positioning for the Three.js canvas. The canvas was being created but not positioned properly in the DOM, causing it to be invisible.
+
+2. Z-index conflicts between the canvas and UI elements. The canvas needed to be behind the UI elements (fuel bar, controls) with a lower z-index.
+
+### Changes Made
+1. Added proper CSS positioning to the canvas element:
+```css
+canvas {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+```
+
+2. Ensured UI elements have higher z-index:
+```css
+#fuel-bar, #controls {
+  position: absolute;
+  z-index: 10;
+}
+```
+
+3. Validated that the canvas is correctly added to the DOM via `document.body.appendChild(renderer.domElement)` in main.js.
+
+4. Confirmed the animation loop is properly executing `renderer.render(scene, camera)`.
+
+### Results
+- The 3D scene now renders properly
+- The green fuel bar appears correctly overlaid on the scene
+- Movement controls are functional
+- The scene elements are visible behind the UI elements

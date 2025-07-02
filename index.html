@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blockchain Wallet Visualizer</title>
   <style>
+    @font-face {
+      font-family: 'Digital';
+      src: url('https://fonts.cdnfonts.com/s/29068/digital-7.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
     body {
       margin: 0;
       overflow: hidden;
@@ -13,26 +19,52 @@
     }
     canvas {
       display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    
+    #fuel-bar, #controls {
+      position: absolute;
+      z-index: 10;
     }
     #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 14px;
+      display: none; /* Hide the info text in the top-left corner */
     }
     #controls {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       color: white;
       background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
+      padding: 8px;
       border-radius: 5px;
-      font-size: 12px;
+      font-size: 10px;
+      text-align: center;
+      font-family: 'Digital', monospace;
+    }
+    #fuel-bar {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 12px;
+      background-color: rgba(50, 50, 50, 0.7);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      z-index: 100;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.8), inset 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+    #fuel-level {
+      height: 100%;
+      width: 100%;
+      background-color: #22cc22; /* Start with green */
+      transition: width 0.2s, background-color 0.2s;
+      z-index: 101;
     }
     #wallet-tooltip {
       position: absolute;
@@ -84,9 +116,13 @@
     <p>Interactive 3D visualization - Desktop & Mobile</p>
   </div>
   
+  <div id="fuel-bar">
+    <div id="fuel-level"></div>
+  </div>
+  
   <div id="controls">
-    <p>Left Click: Rotate | Right Click: Pan | Scroll: Zoom</p>
-    <p>Hover over wallet points for details</p>
+    <p>WASD TO MOVE, MOUSE TO LOOK AROUND</p>
+    <p>HOLD LEFT SHIFT TO BOOST</p>
   </div>
   
   <div id="wallet-tooltip">
@@ -109,5 +145,15 @@
     }
   </script>
   <script type="module" src="./public/src/main.js"></script>
+  <script>
+    // Initialize the fuel level to full
+    window.addEventListener('load', function() {
+      const fuelLevel = document.getElementById('fuel-level');
+      if (fuelLevel) {
+        fuelLevel.style.width = '100%';
+        fuelLevel.style.backgroundColor = '#22cc22';
+      }
+    });
+  </script>
 </body>
 </html>
