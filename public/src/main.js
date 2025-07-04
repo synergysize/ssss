@@ -6,6 +6,7 @@ import { sharedPoints, fartcoinPoints, goatTokenPoints, generateAllPoints } from
 import tooltipFix from './tooltipFix.js';
 import WalletTooltip from './walletTooltip.js';
 import directTooltipFix, { createTooltipIfMissing, showTooltip, hideTooltip, updateTooltipContent } from './directTooltipFix.js';
+import { initFireworks, updateFireworks } from './fireworks.js';
 
 // V31 - Added emojis, enhanced starfield, and constellations
 console.log("Starting 3D Blockchain Visualizer v31 with 💨 and 🐐 tokens");
@@ -688,6 +689,9 @@ function updateConstellationAnimations(delta) {
 
 // Add starfield to the scene
 const starfield = createStarfield();
+
+// Initialize fireworks
+initFireworks(scene);
 
 // Create 3D tooltip for wallet data
 const walletTooltip = new WalletTooltip(scene, camera);
@@ -1599,6 +1603,9 @@ function animate() {
       console.log('HTML tooltip hidden on hover end');
     }
   }
+  
+  // Update fireworks
+  updateFireworks(scene, delta);
   
   // Render the scene
   renderer.render(scene, camera);
