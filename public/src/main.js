@@ -146,8 +146,49 @@ function onMouseMove(event) {
   }
 }
 
-// Add mouse move listener
+// Add mouse move and pointer lock listeners
 window.addEventListener('mousemove', onMouseMove, false);
+
+// Implement pointer lock for mouse look
+const canvas = renderer.domElement;
+
+// Function to handle pointer lock state changes
+function pointerLockChange() {
+  if (document.pointerLockElement === canvas) {
+    console.log('Pointer lock active - mouse look enabled');
+    document.addEventListener('mousemove', onMouseLookMove, false);
+  } else {
+    console.log('Pointer lock inactive - mouse look disabled');
+    document.removeEventListener('mousemove', onMouseLookMove, false);
+  }
+}
+
+// Function for mouse look movement when pointer is locked
+function onMouseLookMove(event) {
+  if (controlType === 'Fly' && controls) {
+    const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+    const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+    
+    // Update camera rotation based on mouse movement
+    controls.mouseX = movementX;
+    controls.mouseY = movementY;
+  }
+}
+
+// Request pointer lock when canvas is clicked
+canvas.addEventListener('click', function() {
+  if (controlType === 'Fly') {
+    canvas.requestPointerLock = canvas.requestPointerLock || 
+                                canvas.mozRequestPointerLock ||
+                                canvas.webkitRequestPointerLock;
+    canvas.requestPointerLock();
+  }
+});
+
+// Add pointer lock change event listeners
+document.addEventListener('pointerlockchange', pointerLockChange, false);
+document.addEventListener('mozpointerlockchange', pointerLockChange, false);
+document.addEventListener('webkitpointerlockchange', pointerLockChange, false);
 
 // Create starfield background
 function createStarfield() {
@@ -786,8 +827,9 @@ try {
     controls = new FlyControls(camera, renderer.domElement);
     controls.movementSpeed = 400;  // Increased movement speed from 200 to 400
     controls.rollSpeed = Math.PI / 6;  // Set roll speed as specified
-    controls.dragToLook = true;  // Mouse drag to look around
+    controls.dragToLook = false;  // Set to false to enable direct mouse look
     controls.autoForward = false;  // Don't move forward automatically
+    controls.lookSpeed = 0.3;  // Set a sensible mouse look speed
     controlType = 'Fly';  // Set control type for event handlers
     
     // Additional physics properties for desktop
