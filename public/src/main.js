@@ -1247,17 +1247,21 @@ function animate() {
     // Update jetpack fuel
     const fuelLevelElement = document.getElementById('fuel-level');
     
-    // Handle jetpack fuel logic
-    if (jetpackKeyPressed && controls.jetpackEnabled && controls.jetpackFuel > 0) {
+    // Handle jetpack fuel logic - Fixed functionality
+    if (controlType === 'Fly' && jetpackKeyPressed && controls.jetpackEnabled && controls.jetpackFuel > 0) {
       // Only activate jetpack when Left Shift is held AND we have fuel
+      if (!controls.jetpackActive) {
+        console.log('Jetpack activated!');
+      }
       controls.jetpackActive = true;
       
-      // Drain fuel
+      // Drain fuel at the correct rate
+      const previousFuel = controls.jetpackFuel;
       controls.jetpackFuel = Math.max(0, controls.jetpackFuel - controls.jetpackDrainRate * delta * 60);
       
       // Log jetpack activation
       if (frameCounter % logInterval === 0) {
-        console.log(`Jetpack active: ${controls.jetpackActive}, Fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}`);
+        console.log(`Jetpack active: ${controls.jetpackActive}, Fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Drain rate: ${controls.jetpackDrainRate}`);
       }
       
       // Disable jetpack if fuel depleted
@@ -1274,7 +1278,8 @@ function animate() {
       controls.jetpackActive = false;
       
       // Recharge fuel when not using jetpack
-      if (controls.jetpackFuel < controls.jetpackMaxFuel) {
+      if (controlType === 'Fly' && controls.jetpackFuel < controls.jetpackMaxFuel) {
+        const previousFuel = controls.jetpackFuel;
         controls.jetpackFuel = Math.min(
           controls.jetpackMaxFuel, 
           controls.jetpackFuel + controls.jetpackRefillRate * delta * 60
@@ -1282,7 +1287,7 @@ function animate() {
         
         // Log fuel recharge
         if (frameCounter % logInterval === 0) {
-          console.log(`Recharging fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}`);
+          console.log(`Recharging fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Refill rate: ${controls.jetpackRefillRate}`);
         }
         
         // Re-enable jetpack if fuel reaches minimum threshold
@@ -1317,7 +1322,7 @@ function animate() {
     // Apply standard FlyControls update for basic movement
     controls.update(delta);
     
-    // Handle jetpack mechanics with spacebar
+    // Handle jetpack mechanics with shift key
     if (controls.jetpackActive && controls.jetpackEnabled) {
       // Get the camera's forward direction for jetpack thrust
       const jetpackThrustVector = forwardVector.clone();
@@ -1325,9 +1330,15 @@ function animate() {
       // Apply strong forward thrust in the camera's direction when jetpack is active
       // Multiply by the boost factor to make it significantly faster
       const jetpackSpeed = controls.movementSpeed * controls.jetpackBoostFactor;
+      
+      // Add a strong forward boost
       movement.add(
         jetpackThrustVector.multiplyScalar(jetpackSpeed * delta)
       );
+      
+      // Also add a small upward boost for better flying feel
+      const upVector = new THREE.Vector3(0, 1, 0);
+      movement.add(upVector.multiplyScalar(controls.movementSpeed * 0.5 * delta));
       
       // Debug logging for jetpack thrust
       if (frameCounter % logInterval === 0) {
