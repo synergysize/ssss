@@ -848,12 +848,21 @@ try {
     controls.jetpackBoostFactor = 2.5; // How much faster than normal speed
     
     // Show the fuel meter UI for desktop
-    const fuelMeterContainer = document.getElementById('fuel-meter-container');
-    if (fuelMeterContainer) {
-      fuelMeterContainer.style.display = 'block';
-      console.log('Fuel meter UI initialized for desktop controls');
+    const fuelBar = document.getElementById('fuel-bar');
+    if (fuelBar) {
+      fuelBar.style.display = 'block';
+      
+      // Make sure the inner fuel level element exists and is initialized
+      const fuelLevel = document.getElementById('fuel-level');
+      if (fuelLevel) {
+        fuelLevel.style.width = '100%';
+        fuelLevel.style.backgroundColor = '#22cc22';
+        console.log('Fuel meter UI initialized for desktop controls');
+      } else {
+        console.error('Fuel level element not found in the DOM');
+      }
     } else {
-      console.error('Fuel meter container not found in the DOM');
+      console.error('Fuel bar not found in the DOM');
     }
     
     controlType = 'Fly';
@@ -1301,6 +1310,14 @@ function animate() {
     // Update fuel meter UI
     if (fuelLevelElement) {
       const fuelPercentage = (controls.jetpackFuel / controls.jetpackMaxFuel) * 100;
+      
+      // Ensure the fuel bar is visible
+      const fuelBar = document.getElementById('fuel-bar');
+      if (fuelBar) {
+        fuelBar.style.display = 'block';
+      }
+      
+      // Update the width of the fuel level
       fuelLevelElement.style.width = `${fuelPercentage}%`;
       
       // Change color based on fuel level
@@ -1311,6 +1328,20 @@ function animate() {
       } else {
         fuelLevelElement.style.backgroundColor = '#22cc22'; // Green when high
       }
+      
+      // Add a glow effect when jetpack is active
+      if (controls.jetpackActive) {
+        fuelLevelElement.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.7)';
+      } else {
+        fuelLevelElement.style.boxShadow = 'none';
+      }
+      
+      // Log fuel bar updates
+      if (frameCounter % logInterval === 0) {
+        console.log(`Updated fuel bar: width=${fuelPercentage.toFixed(1)}%, active=${controls.jetpackActive}`);
+      }
+    } else {
+      console.warn('Fuel level element not found in the DOM');
     }
     
     // Get the camera's forward direction
