@@ -716,16 +716,53 @@ let controlType;
 // Track shift key state for jetpack
 let shiftKeyPressed = false;
 
-// Add event listeners for shift key (for jetpack control)
+// Add event listeners for shift key (for jetpack control) and ensure WASD keys are properly captured
 window.addEventListener('keydown', function(event) {
   if (event.code === 'ShiftLeft') {
     shiftKeyPressed = true;
+  }
+  
+  // Make sure FlyControls receives these events for WASD movement
+  if (controlType === 'Fly' && controls) {
+    // Ensure the moveState object exists and is properly initialized
+    if (!controls.moveState) {
+      controls.moveState = {
+        up: 0, down: 0,
+        left: 0, right: 0,
+        forward: 0, back: 0,
+        pitchUp: 0, pitchDown: 0,
+        yawLeft: 0, yawRight: 0,
+        rollLeft: 0, rollRight: 0
+      };
+    }
+    
+    // Update moveState directly based on key presses for WASD
+    switch (event.code) {
+      case 'KeyW': controls.moveState.forward = 1; break;
+      case 'KeyS': controls.moveState.back = 1; break;
+      case 'KeyA': controls.moveState.left = 1; break;
+      case 'KeyD': controls.moveState.right = 1; break;
+      case 'KeyR': controls.moveState.up = 1; break;
+      case 'KeyF': controls.moveState.down = 1; break;
+    }
   }
 });
 
 window.addEventListener('keyup', function(event) {
   if (event.code === 'ShiftLeft') {
     shiftKeyPressed = false;
+  }
+  
+  // Update FlyControls moveState on key release
+  if (controlType === 'Fly' && controls) {
+    switch (event.code) {
+      case 'KeyW': controls.moveState.forward = 0; break;
+      case 'KeyS': controls.moveState.back = 0; break;
+      case 'KeyA': controls.moveState.left = 0; break;
+      case 'KeyD': controls.moveState.right = 0; break;
+      case 'KeyR': controls.moveState.up = 0; break;
+      case 'KeyF': controls.moveState.down = 0; break;
+    }
   }
 });
 
@@ -751,6 +788,7 @@ try {
     controls.rollSpeed = Math.PI / 6;  // Set roll speed as specified
     controls.dragToLook = true;  // Mouse drag to look around
     controls.autoForward = false;  // Don't move forward automatically
+    controlType = 'Fly';  // Set control type for event handlers
     
     // Additional physics properties for desktop
     controls.velocity = new THREE.Vector3(0, 0, 0); // Current velocity vector
