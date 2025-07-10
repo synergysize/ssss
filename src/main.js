@@ -1158,8 +1158,11 @@ if (sharedPoints.length > 0 && fartcoinPoints.length > 0 && goatTokenPoints.leng
 // Update controls instructions based on detected control type
 const controlsElement = document.getElementById('controls');
 if (controlsElement) {
-  // Set simple movement controls regardless of control type
-  controlsElement.innerHTML = 'WASD to move';
+  if (controlType === 'Fly') {
+    controlsElement.innerHTML = 'WASD to move, drag mouse to look around<br>HOLD LEFT SHIFT to activate jetpack boost';
+  } else {
+    controlsElement.innerHTML = 'Drag to rotate, pinch to zoom';
+  }
 }
 
 // Handle window resize
@@ -1373,12 +1376,12 @@ function animate() {
         jetpackThrustVector.multiplyScalar(jetpackSpeed * delta * 2)
       );
       
-      // Also add a small upward boost for better flying feel
+      // Add a stronger upward boost for better flying feel
       const upVector = new THREE.Vector3(0, 1, 0);
       camera.position.add(upVector.multiplyScalar(controls.movementSpeed * delta));
       
       // Visual feedback for jetpack activation
-      if (frameCounter % 5 === 0) {
+      if (frameCounter % logInterval === 0) {
         console.log(`Jetpack boost applied: speed=${jetpackSpeed}, fuel=${controls.jetpackFuel.toFixed(1)}`);
       }
       
