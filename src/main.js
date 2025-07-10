@@ -148,8 +148,11 @@ function onMouseMove(event) {
   }
 }
 
-// Add variables to control rotation when mouse leaves/enters screen
+// Add variables to control rotation when mouse leaves/enters screen and pause state
 let stopRotating = false;
+let paused = false;
+
+// Mouse enter/leave listeners to stop rotation when cursor leaves window
 window.addEventListener('mouseleave', () => stopRotating = true);
 window.addEventListener('mouseenter', () => stopRotating = false);
 
@@ -159,35 +162,31 @@ window.addEventListener('mousemove', onMouseMove, false);
 // Setup for hover-based look
 const canvas = renderer.domElement;
 
-// Restore pointer lock functionality for mouse look
-canvas.addEventListener('click', function() {
-  canvas.requestPointerLock();
-  console.log('Pointer lock requested');
+// Ensure cursor is always visible
+canvas.style.cursor = 'default !important';
+
+// ESC key to toggle pause
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    paused = !paused;
+    console.log('Pause state:', paused ? 'PAUSED' : 'RESUMED');
+    
+    // You could add a visual pause indicator here
+    // If you want to add a pause indicator to the UI later
+  }
 });
 
-document.addEventListener('pointerlockchange', function() {
-  console.log('Pointer lock state changed:', document.pointerLockElement === canvas ? 'locked' : 'unlocked');
-});
-
-// Function for mouse look movement using pointer lock for better control
+// Function for mouse look movement using cursor position (no pointer lock)
 window.addEventListener('mousemove', (e) => {
-  if (controlType === 'Fly' && controls && !stopRotating) {
-    if (document.pointerLockElement === canvas) {
-      // Use pointer lock movement which gives movementX/Y for better precision
-      const sensitivity = 0.3;
-      controls.mouseX += e.movementX * sensitivity;
-      controls.mouseY += e.movementY * sensitivity;
-      console.log(`Mouse look: movementX=${e.movementX}, movementY=${e.movementY}`);
-    } else {
-      // Fallback to center-based calculation when pointer lock is not active
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      const deltaX = e.clientX - centerX;
-      const deltaY = e.clientY - centerY;
-      const sensitivity = 0.05;
-      controls.mouseX = deltaX * sensitivity;
-      controls.mouseY = deltaY * sensitivity;
-    }
+  if (controlType === 'Fly' && controls && !stopRotating && !paused) {
+    // Use client position based calculation
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const deltaX = e.clientX - centerX;
+    const deltaY = e.clientY - centerY;
+    const sensitivity = 0.05;
+    controls.mouseX = deltaX * sensitivity;
+    controls.mouseY = deltaY * sensitivity;
   }
 });
 
@@ -1218,13 +1217,15 @@ const initialCameraTarget = boxCenter.clone();
 function animate() {
   requestAnimationFrame(animate);
   
-  const delta = clock.getDelta();
-  
-  // Animate constellation pulsing
-  updateConstellationAnimations(delta);
-  
-  // Update 3D tooltip position
-  walletTooltip.update();
+  // Always request animation frame, but only update if not paused
+  if (!paused) {
+    const delta = clock.getDelta();
+    
+    // Animate constellation pulsing
+    updateConstellationAnimations(delta);
+    
+    // Update 3D tooltip position
+    walletTooltip.update();
   
   // Handle hover animation for better visibility
   if (hoveredObject && hoveredObject.userData.pulseAnimation) {
@@ -1743,8 +1744,9 @@ function animate() {
   // Update fireworks
   updateFireworks(scene, delta);
   
-  // Render the scene
-  renderer.render(scene, camera);
+    // Render the scene
+    renderer.render(scene, camera);
+  } // End of !paused block
 }
 
 animate();
