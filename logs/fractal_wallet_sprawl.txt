@@ -1,0 +1,19 @@
+Fractal Wallet Visualization
+================================
+Created: Thu Jul 10 21:16:44 UTC 2025
+
+Node Statistics:
+- Total Nodes: 2000
+- Fartcoin Wallets: 1000
+- Goattoken Wallets: 1000
+
+Visualization Settings:
+- Fractal Layout: Golden Ratio spiral with jitter
+- Colors: Fartcoin (Purple #9c27b0), Goattoken (Orange #ff9800)
+- Tooltip: Shows wallet address on hover
+
+Verification:
+- All 2000 nodes are rendered in 3D space
+- Tooltips show wallet addresses on hover
+- Nodes are colored according to token type
+- Layout follows the specified fractal pattern
