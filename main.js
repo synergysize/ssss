@@ -233,8 +233,19 @@ function createWalletVisualization() {
     // Select material based on wallet type
     const material = wallet.type === 'fartcoin' ? fartcoinMaterial : goattokenMaterial;
     
-    // Create mesh
-    const mesh = new THREE.Mesh(geometry, material.clone());
+    // Calculate distance from origin for opacity falloff
+    const distanceFromOrigin = position.length();
+    const maxDistance = 7000; // Adjust based on your scene scale
+    
+    // Apply opacity based on distance using exponential falloff
+    const opacityValue = Math.max(0.1, 1 / (1 + Math.pow(distanceFromOrigin / maxDistance, 2)));
+    
+    // Create mesh with opacity applied
+    const nodeMaterial = material.clone();
+    nodeMaterial.transparent = true;
+    nodeMaterial.opacity = opacityValue;
+    
+    const mesh = new THREE.Mesh(geometry, nodeMaterial);
     mesh.position.copy(position);
     
     // Add a glow effect using our custom shader
@@ -243,6 +254,11 @@ function createWalletVisualization() {
     const glowMaterial = wallet.type === 'fartcoin' ? 
       fartcoinShaderMaterial.clone() : 
       goattokenShaderMaterial.clone();
+    
+    // Also apply opacity to glow material
+    if (glowMaterial.uniforms && glowMaterial.uniforms.opacity) {
+      glowMaterial.uniforms.opacity.value = opacityValue;
+    }
     
     const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
     mesh.add(glowMesh);
@@ -365,8 +381,11 @@ function animate() {
     // Apply galaxy rotation if auto-rotating or regardless for slow swirl effect
     if (galaxyObject) {
       // Always rotate slightly for the swirling effect, but rotate faster when auto-rotating
-      const rotationSpeed = isAutoRotating ? galaxyRotationSpeed * 2 : galaxyRotationSpeed;
-      galaxyObject.rotation.y += rotationSpeed;
+      const baseRotationSpeed = isAutoRotating ? galaxyRotationSpeed * 2 : galaxyRotationSpeed;
+      
+      // Add parallax spin effect with different rotation speeds for Y and Z axes
+      galaxyObject.rotation.y += baseRotationSpeed * 2.5; // 0.0005
+      galaxyObject.rotation.z += baseRotationSpeed * 1.5; // 0.0003
     }
     
     // Animate the glow effect

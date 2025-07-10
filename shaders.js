@@ -16,6 +16,7 @@ export const vertexShader = `
 export const fragmentShader = `
   uniform vec3 glowColor;
   uniform float intensity;
+  uniform float opacity;
   
   varying vec3 vNormal;
   varying vec3 vPosition;
@@ -24,18 +25,19 @@ export const fragmentShader = `
     float depth = 1.0 - min(1.0, length(vPosition) / 50.0);
     float glow = pow(0.9 - dot(vNormal, vec3(0, 0, 1.0)), 3.0) * intensity;
     
-    gl_FragColor = vec4(glowColor, 1.0) * glow * depth;
+    gl_FragColor = vec4(glowColor, opacity) * glow * depth;
   }
 `;
 
 // Create a shader material with the given color
-export function createGlowMaterial(color, intensity = 1.5) {
+export function createGlowMaterial(color, intensity = 1.5, opacity = 1.0) {
   return {
     vertexShader,
     fragmentShader,
     uniforms: {
       glowColor: { value: color },
-      intensity: { value: intensity }
+      intensity: { value: intensity },
+      opacity: { value: opacity }
     },
     transparent: true,
     depthWrite: false,
