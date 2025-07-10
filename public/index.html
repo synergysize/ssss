@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blockchain Wallet Visualizer</title>
   <style>
+    @font-face {
+      font-family: 'Digital';
+      src: url('https://fonts.cdnfonts.com/s/29068/digital-7.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
     body {
       margin: 0;
       overflow: hidden;
@@ -13,38 +19,130 @@
     }
     canvas {
       display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      cursor: default !important;
+    }
+    
+    #fuel-bar, #controls, #contract-address {
+      position: absolute;
+      z-index: 10;
+    }
+    #contract-address {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-family: monospace;
+      color: white;
+      opacity: 0.8;
     }
     #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 14px;
+      display: none; /* Hide the info text in the top-left corner */
     }
     #controls {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       color: white;
       background-color: rgba(0, 0, 0, 0.5);
+      padding: 8px;
+      border-radius: 5px;
+      font-size: 10px;
+      text-align: center;
+      font-family: 'Digital', monospace;
+    }
+    #fuel-bar {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 12px;
+      background-color: rgba(50, 50, 50, 0.7);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      z-index: 100;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.8), inset 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+    #fuel-level {
+      height: 100%;
+      width: 100%;
+      background-color: #22cc22; /* Start with green */
+      transition: width 0.2s, background-color 0.2s;
+      z-index: 101;
+    }
+    #wallet-tooltip {
+      position: absolute;
+      display: none;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
       padding: 10px;
       border-radius: 5px;
       font-size: 12px;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 250px;
+      transition: opacity 0.3s;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 10px rgba(0, 100, 255, 0.5);
+    }
+    .tooltip-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #88ccff;
+    }
+    .tooltip-address {
+      font-family: monospace;
+      font-size: 12px;
+      margin-bottom: 8px;
+      color: #aaccff;
+      word-break: break-all;
+    }
+    .tooltip-holdings {
+      margin-bottom: 5px;
+    }
+    .tooltip-fartcoin {
+      color: #88ff88;
+    }
+    .tooltip-goat {
+      color: #8888ff;
+    }
+    .tooltip-total {
+      margin-top: 8px;
+      font-weight: bold;
+      color: #ffffff;
     }
   </style>
 </head>
 <body>
   <div id="info">
-    <h2>3D Blockchain Wallet Visualizer</h2>
-    <p>Interactive 3D visualization - Desktop & Mobile</p>
+    <!-- Header text removed -->
   </div>
   
-  <div id="controls">
-    <p>Left Click: Rotate | Right Click: Pan | Scroll: Zoom</p>
+  <div id="fuel-bar">
+    <div id="fuel-level"></div>
   </div>
+  
+  <div id="controls">WASD to move</div>
+  
+  <div id="wallet-tooltip">
+    <div class="tooltip-title">Wallet Details</div>
+    <div class="tooltip-address">0x0000...0000</div>
+    <div class="tooltip-holdings">
+      <div class="tooltip-fartcoin">💨: 0</div>
+      <div class="tooltip-goat">🐐: 0</div>
+    </div>
+    <div class="tooltip-total">Total Value: 0</div>
+  </div>
+  
+  <div id="contract-address">Contract Address: 9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump</div>
   
   <script type="importmap">
     {
@@ -56,5 +154,15 @@
     }
   </script>
   <script type="module" src="./src/main.js"></script>
+  <script>
+    // Initialize the fuel level to full
+    window.addEventListener('load', function() {
+      const fuelLevel = document.getElementById('fuel-level');
+      if (fuelLevel) {
+        fuelLevel.style.width = '100%';
+        fuelLevel.style.backgroundColor = '#22cc22';
+      }
+    });
+  </script>
 </body>
 </html>
