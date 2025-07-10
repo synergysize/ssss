@@ -1,0 +1,19 @@
+WASD Movement Fix
+
+Issue:
+- Pointer lock functionality was disabled
+- FlyControls needed proper initialization for WASD controls
+
+Changes Made:
+1. Restored pointer lock functionality by removing the override of requestPointerLock
+2. Added event listener to activate pointer lock on canvas click
+3. Added pointer lock change event listener for better control
+4. Ensured controls.moveState is properly initialized
+5. Fixed keyboard event handling for WASD keys
+
+Now users can:
+- Click on the canvas to activate pointer lock
+- Use WASD keys to move around the 3D environment
+- Movement works properly in all directions
+
+The WASD movement system is now fully functional.

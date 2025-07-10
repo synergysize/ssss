@@ -159,34 +159,35 @@ window.addEventListener('mousemove', onMouseMove, false);
 // Setup for hover-based look
 const canvas = renderer.domElement;
 
-// Override requestPointerLock to do nothing
-Element.prototype.requestPointerLock = function() {
-  console.log('Pointer lock request intercepted and blocked');
-  return false;
-};
+// Restore pointer lock functionality for mouse look
+canvas.addEventListener('click', function() {
+  canvas.requestPointerLock();
+  console.log('Pointer lock requested');
+});
 
-// Override pointer lock related methods to ensure they don't work
-document.exitPointerLock = function() {
-  console.log('Exit pointer lock intercepted');
-  return false;
-};
+document.addEventListener('pointerlockchange', function() {
+  console.log('Pointer lock state changed:', document.pointerLockElement === canvas ? 'locked' : 'unlocked');
+});
 
-// Function for mouse look movement based on hover position only
+// Function for mouse look movement using pointer lock for better control
 window.addEventListener('mousemove', (e) => {
   if (controlType === 'Fly' && controls && !stopRotating) {
-    // Calculate relative position from center of screen
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    
-    // Calculate distance from center
-    const deltaX = e.clientX - centerX;
-    const deltaY = e.clientY - centerY;
-    
-    // Use delta position to control rotation
-    // Adjust sensitivity as needed
-    const sensitivity = 0.05;
-    controls.mouseX = deltaX * sensitivity;
-    controls.mouseY = deltaY * sensitivity;
+    if (document.pointerLockElement === canvas) {
+      // Use pointer lock movement which gives movementX/Y for better precision
+      const sensitivity = 0.3;
+      controls.mouseX += e.movementX * sensitivity;
+      controls.mouseY += e.movementY * sensitivity;
+      console.log(`Mouse look: movementX=${e.movementX}, movementY=${e.movementY}`);
+    } else {
+      // Fallback to center-based calculation when pointer lock is not active
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const deltaX = e.clientX - centerX;
+      const deltaY = e.clientY - centerY;
+      const sensitivity = 0.05;
+      controls.mouseX = deltaX * sensitivity;
+      controls.mouseY = deltaY * sensitivity;
+    }
   }
 });
 
@@ -1308,29 +1309,35 @@ function animate() {
     if (fuelLevelElement) {
       const fuelPercentage = (controls.jetpackFuel / controls.jetpackMaxFuel) * 100;
       
-      // Ensure the fuel bar is visible
+      // Ensure the fuel bar is visible with high z-index
       const fuelBar = document.getElementById('fuel-bar');
       if (fuelBar) {
         fuelBar.style.display = 'block';
+        fuelBar.style.zIndex = '1000'; // Ensure it's above other elements
+        fuelBar.style.opacity = '1'; // Make fully visible
       }
       
       // Update the width of the fuel level
       fuelLevelElement.style.width = `${fuelPercentage}%`;
       
-      // Change color based on fuel level
+      // Change color based on fuel level with more vibrant colors
       if (fuelPercentage < 20) {
-        fuelLevelElement.style.backgroundColor = '#cc2222'; // Red when low
+        fuelLevelElement.style.backgroundColor = '#ff3333'; // Bright red when low
       } else if (fuelPercentage < 50) {
-        fuelLevelElement.style.backgroundColor = '#cccc22'; // Yellow when medium
+        fuelLevelElement.style.backgroundColor = '#ffcc00'; // Bright yellow when medium
       } else {
-        fuelLevelElement.style.backgroundColor = '#22cc22'; // Green when high
+        fuelLevelElement.style.backgroundColor = '#33ff33'; // Bright green when high
       }
       
-      // Add a glow effect when jetpack is active
+      // Add a strong glow effect when jetpack is active
       if (controls.jetpackActive) {
-        fuelLevelElement.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.7)';
+        fuelLevelElement.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.9)';
+        // Pulse effect for active jetpack
+        const pulseValue = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+        fuelLevelElement.style.opacity = pulseValue.toString();
       } else {
-        fuelLevelElement.style.boxShadow = 'none';
+        fuelLevelElement.style.boxShadow = '0 0 5px rgba(255, 255, 255, 0.5)';
+        fuelLevelElement.style.opacity = '1';
       }
       
       // Log fuel bar updates
@@ -1361,14 +1368,19 @@ function animate() {
       // Multiply by the boost factor to make it significantly faster
       const jetpackSpeed = controls.movementSpeed * controls.jetpackBoostFactor;
       
-      // Add a strong forward boost
-      movement.add(
-        jetpackThrustVector.multiplyScalar(jetpackSpeed * delta)
+      // Add a strong forward boost to camera position directly
+      camera.position.add(
+        jetpackThrustVector.multiplyScalar(jetpackSpeed * delta * 2)
       );
       
       // Also add a small upward boost for better flying feel
       const upVector = new THREE.Vector3(0, 1, 0);
-      movement.add(upVector.multiplyScalar(controls.movementSpeed * 0.5 * delta));
+      camera.position.add(upVector.multiplyScalar(controls.movementSpeed * delta));
+      
+      // Visual feedback for jetpack activation
+      if (frameCounter % 5 === 0) {
+        console.log(`Jetpack boost applied: speed=${jetpackSpeed}, fuel=${controls.jetpackFuel.toFixed(1)}`);
+      }
       
       // Debug logging for jetpack thrust
       if (frameCounter % logInterval === 0) {

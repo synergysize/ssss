@@ -1,0 +1,19 @@
+Mouse Look Functionality Fix
+
+Issue:
+- Mouse look controls were not properly handling pointer lock
+- Camera rotation was using a center-based approach rather than true mouse movement
+
+Changes Made:
+1. Enhanced mousemove event handler to use pointer lock when available
+2. Added conditional logic to detect when pointer lock is active
+3. Switched to using movementX/Y for more precise mouse look control
+4. Maintained fallback to center-based calculation when pointer lock is not active
+5. Increased sensitivity for better mouse look control
+
+Now users can:
+- Click the canvas to activate pointer lock
+- Move the mouse to look around the 3D environment
+- Experience smooth and responsive camera rotation
+
+The mouse look functionality is now working correctly, providing an immersive 3D experience.
