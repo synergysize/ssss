@@ -160,11 +160,11 @@
       });
     }
   }
-})({"6zReE":[function(require,module,exports,__globalThis) {
+})({"jRVYE":[function(require,module,exports,__globalThis) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
-var HMR_SERVER_PORT = 3000;
+var HMR_SERVER_PORT = 9124;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "439701173a9199ea";
 var HMR_USE_SSE = false;
@@ -799,41 +799,39 @@ function onMouseMove(event1) {
         tooltip = (0, _directTooltipFixJs.createTooltipIfMissing)();
     }
 }
-// Add variables to control rotation when mouse leaves/enters screen
+// Add variables to control rotation when mouse leaves/enters screen and pause state
 let stopRotating = false;
+let paused = false;
+// Mouse enter/leave listeners to stop rotation when cursor leaves window
 window.addEventListener('mouseleave', ()=>stopRotating = true);
 window.addEventListener('mouseenter', ()=>stopRotating = false);
 // Add mouse move listener for hover-based look only
 window.addEventListener('mousemove', onMouseMove, false);
 // Setup for hover-based look
 const canvas = renderer.domElement;
-// Restore pointer lock functionality for mouse look
-canvas.addEventListener('click', function() {
-    canvas.requestPointerLock();
-    console.log('Pointer lock requested');
+// Ensure cursor is always visible
+canvas.style.cursor = 'default !important';
+// ESC key to toggle pause
+window.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape') {
+        paused = !paused;
+        console.log('Pause state:', paused ? 'PAUSED' : 'RESUMED');
+        // Show or hide the pause indicator
+        const pauseIndicator = document.getElementById('pause-indicator');
+        if (pauseIndicator) pauseIndicator.style.display = paused ? 'block' : 'none';
+    }
 });
-document.addEventListener('pointerlockchange', function() {
-    console.log('Pointer lock state changed:', document.pointerLockElement === canvas ? 'locked' : 'unlocked');
-});
-// Function for mouse look movement using pointer lock for better control
+// Function for mouse look movement using cursor position (no pointer lock)
 window.addEventListener('mousemove', (e)=>{
-    if (controlType === 'Fly' && controls && !stopRotating) {
-        if (document.pointerLockElement === canvas) {
-            // Use pointer lock movement which gives movementX/Y for better precision
-            const sensitivity = 0.3;
-            controls.mouseX += e.movementX * sensitivity;
-            controls.mouseY += e.movementY * sensitivity;
-            console.log(`Mouse look: movementX=${e.movementX}, movementY=${e.movementY}`);
-        } else {
-            // Fallback to center-based calculation when pointer lock is not active
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            const deltaX = e.clientX - centerX;
-            const deltaY = e.clientY - centerY;
-            const sensitivity = 0.05;
-            controls.mouseX = deltaX * sensitivity;
-            controls.mouseY = deltaY * sensitivity;
-        }
+    if (controlType === 'Fly' && controls && !stopRotating && !paused) {
+        // Use client position based calculation
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const deltaX = e.clientX - centerX;
+        const deltaY = e.clientY - centerY;
+        const sensitivity = 0.05;
+        controls.mouseX = deltaX * sensitivity;
+        controls.mouseY = deltaY * sensitivity;
     }
 });
 // Create starfield background
@@ -1803,350 +1801,353 @@ const initialCameraPosition = camera.position.clone();
 const initialCameraTarget = boxCenter.clone();
 function animate() {
     requestAnimationFrame(animate);
-    const delta = clock.getDelta();
-    // Animate constellation pulsing
-    updateConstellationAnimations(delta);
-    // Update 3D tooltip position
-    walletTooltip.update();
-    // Handle hover animation for better visibility
-    if (hoveredObject && hoveredObject.userData.pulseAnimation) {
-        hoveredObject.userData.pulseTime += delta;
-        // More extreme pulsing - 5x to 8x original size
-        const pulseScale = hoveredObject.userData.originalScale * (5 + Math.sin(hoveredObject.userData.pulseTime * 8) * 3);
-        hoveredObject.scale.set(pulseScale, pulseScale, 1);
-        // Also pulse the brightness with more extreme values and different color
-        if (hoveredObject.material) {
-            // Use bright yellow/white for maximum visibility
-            const pulseIntensity = 1.5 + Math.sin(hoveredObject.userData.pulseTime * 8) * 0.5;
-            hoveredObject.material.color.setRGB(1.0, 1.0, Math.min(1, 0.7 + Math.sin(hoveredObject.userData.pulseTime * 16) * 0.3) // Pulsing blue
-            );
-        }
-    }
-    // Update controls based on control type
-    if (controlType === 'Fly') {
-        // Custom physics for FlyControls on desktop
-        // Get keyboard state
-        const moveForward = controls.moveState.forward > 0;
-        // Use ShiftLeft instead of spacebar (which was mapped to moveState.up)
-        const jetpackKeyPressed = shiftKeyPressed;
-        // Update jetpack fuel
-        const fuelLevelElement = document.getElementById('fuel-level');
-        // Handle jetpack fuel logic - Fixed functionality
-        if (controlType === 'Fly' && jetpackKeyPressed && controls.jetpackEnabled && controls.jetpackFuel > 0) {
-            // Only activate jetpack when Left Shift is held AND we have fuel
-            if (!controls.jetpackActive) console.log('Jetpack activated!');
-            controls.jetpackActive = true;
-            // Drain fuel at the correct rate
-            const previousFuel = controls.jetpackFuel;
-            controls.jetpackFuel = Math.max(0, controls.jetpackFuel - controls.jetpackDrainRate * delta * 60);
-            // Log jetpack activation
-            if (frameCounter % logInterval === 0) console.log(`Jetpack active: ${controls.jetpackActive}, Fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Drain rate: ${controls.jetpackDrainRate}`);
-            // Disable jetpack if fuel depleted
-            if (controls.jetpackFuel <= 0) {
-                controls.jetpackEnabled = false;
-                controls.jetpackActive = false;
-                console.log('Jetpack disabled: Out of fuel');
+    // Always request animation frame, but only update if not paused
+    if (!paused) {
+        const delta = clock.getDelta();
+        // Animate constellation pulsing
+        updateConstellationAnimations(delta);
+        // Update 3D tooltip position
+        walletTooltip.update();
+        // Handle hover animation for better visibility
+        if (hoveredObject && hoveredObject.userData.pulseAnimation) {
+            hoveredObject.userData.pulseTime += delta;
+            // More extreme pulsing - 5x to 8x original size
+            const pulseScale = hoveredObject.userData.originalScale * (5 + Math.sin(hoveredObject.userData.pulseTime * 8) * 3);
+            hoveredObject.scale.set(pulseScale, pulseScale, 1);
+            // Also pulse the brightness with more extreme values and different color
+            if (hoveredObject.material) {
+                // Use bright yellow/white for maximum visibility
+                const pulseIntensity = 1.5 + Math.sin(hoveredObject.userData.pulseTime * 8) * 0.5;
+                hoveredObject.material.color.setRGB(1.0, 1.0, Math.min(1, 0.7 + Math.sin(hoveredObject.userData.pulseTime * 16) * 0.3) // Pulsing blue
+                );
             }
-        } else {
-            // Deactivate jetpack when Left Shift is released
-            if (controls.jetpackActive) console.log('Jetpack deactivated');
-            controls.jetpackActive = false;
-            // Recharge fuel when not using jetpack
-            if (controlType === 'Fly' && controls.jetpackFuel < controls.jetpackMaxFuel) {
+        }
+        // Update controls based on control type
+        if (controlType === 'Fly') {
+            // Custom physics for FlyControls on desktop
+            // Get keyboard state
+            const moveForward = controls.moveState.forward > 0;
+            // Use ShiftLeft instead of spacebar (which was mapped to moveState.up)
+            const jetpackKeyPressed = shiftKeyPressed;
+            // Update jetpack fuel
+            const fuelLevelElement = document.getElementById('fuel-level');
+            // Handle jetpack fuel logic - Fixed functionality
+            if (controlType === 'Fly' && jetpackKeyPressed && controls.jetpackEnabled && controls.jetpackFuel > 0) {
+                // Only activate jetpack when Left Shift is held AND we have fuel
+                if (!controls.jetpackActive) console.log('Jetpack activated!');
+                controls.jetpackActive = true;
+                // Drain fuel at the correct rate
                 const previousFuel = controls.jetpackFuel;
-                controls.jetpackFuel = Math.min(controls.jetpackMaxFuel, controls.jetpackFuel + controls.jetpackRefillRate * delta * 60);
-                // Log fuel recharge
-                if (frameCounter % logInterval === 0) console.log(`Recharging fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Refill rate: ${controls.jetpackRefillRate}`);
-                // Re-enable jetpack if fuel reaches minimum threshold
-                if (!controls.jetpackEnabled && controls.jetpackFuel >= controls.jetpackMinFuelToReactivate) {
-                    controls.jetpackEnabled = true;
-                    console.log('Jetpack re-enabled: Sufficient fuel');
+                controls.jetpackFuel = Math.max(0, controls.jetpackFuel - controls.jetpackDrainRate * delta * 60);
+                // Log jetpack activation
+                if (frameCounter % logInterval === 0) console.log(`Jetpack active: ${controls.jetpackActive}, Fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Drain rate: ${controls.jetpackDrainRate}`);
+                // Disable jetpack if fuel depleted
+                if (controls.jetpackFuel <= 0) {
+                    controls.jetpackEnabled = false;
+                    controls.jetpackActive = false;
+                    console.log('Jetpack disabled: Out of fuel');
                 }
-            }
-        }
-        // Update fuel meter UI
-        if (fuelLevelElement) {
-            const fuelPercentage = controls.jetpackFuel / controls.jetpackMaxFuel * 100;
-            // Ensure the fuel bar is visible with high z-index
-            const fuelBar = document.getElementById('fuel-bar');
-            if (fuelBar) {
-                fuelBar.style.display = 'block';
-                fuelBar.style.zIndex = '1000'; // Ensure it's above other elements
-                fuelBar.style.opacity = '1'; // Make fully visible
-            }
-            // Update the width of the fuel level
-            fuelLevelElement.style.width = `${fuelPercentage}%`;
-            // Change color based on fuel level with more vibrant colors
-            if (fuelPercentage < 20) fuelLevelElement.style.backgroundColor = '#ff3333'; // Bright red when low
-            else if (fuelPercentage < 50) fuelLevelElement.style.backgroundColor = '#ffcc00'; // Bright yellow when medium
-            else fuelLevelElement.style.backgroundColor = '#33ff33'; // Bright green when high
-            // Add a strong glow effect when jetpack is active
-            if (controls.jetpackActive) {
-                fuelLevelElement.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.9)';
-                // Pulse effect for active jetpack
-                const pulseValue = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-                fuelLevelElement.style.opacity = pulseValue.toString();
             } else {
-                fuelLevelElement.style.boxShadow = '0 0 5px rgba(255, 255, 255, 0.5)';
-                fuelLevelElement.style.opacity = '1';
-            }
-            // Log fuel bar updates
-            if (frameCounter % logInterval === 0) console.log(`Updated fuel bar: width=${fuelPercentage.toFixed(1)}%, active=${controls.jetpackActive}`);
-        } else console.warn('Fuel level element not found in the DOM');
-        // Get the camera's forward direction
-        const forwardVector = new _three.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-        // Calculate movement from FlyControls' internal state
-        let movement = new _three.Vector3();
-        // Apply standard FlyControls update for basic movement only if not stopped
-        if (!stopRotating) controls.update(delta);
-        // Handle jetpack mechanics with shift key
-        if (controls.jetpackActive && controls.jetpackEnabled) {
-            // Get the camera's forward direction for jetpack thrust
-            const jetpackThrustVector = forwardVector.clone();
-            // Apply strong forward thrust in the camera's direction when jetpack is active
-            // Multiply by the boost factor to make it significantly faster
-            const jetpackSpeed = controls.movementSpeed * controls.jetpackBoostFactor;
-            // Add a strong forward boost to camera position directly
-            camera.position.add(jetpackThrustVector.multiplyScalar(jetpackSpeed * delta * 2));
-            // Add a stronger upward boost for better flying feel
-            const upVector = new _three.Vector3(0, 1, 0);
-            camera.position.add(upVector.multiplyScalar(controls.movementSpeed * delta));
-            // Visual feedback for jetpack activation
-            if (frameCounter % logInterval === 0) console.log(`Jetpack boost applied: speed=${jetpackSpeed}, fuel=${controls.jetpackFuel.toFixed(1)}`);
-            // Debug logging for jetpack thrust
-            if (frameCounter % logInterval === 0) console.log(`Applying jetpack thrust: speed=${jetpackSpeed}, direction=(${jetpackThrustVector.x.toFixed(2)}, ${jetpackThrustVector.y.toFixed(2)}, ${jetpackThrustVector.z.toFixed(2)})`);
-        }
-        // Apply momentum and damping for zero-gravity drift
-        // Only apply normal WASD movement if jetpack is not active
-        if (!controls.jetpackActive && (controls.moveState.forward || controls.moveState.back || controls.moveState.left || controls.moveState.right || controls.moveState.up || controls.moveState.down)) {
-            // If keys are pressed and jetpack is not active, add their effect to velocity
-            if (controls.moveState.forward) movement.add(forwardVector.clone().multiplyScalar(controls.movementSpeed * delta));
-            if (controls.moveState.back) movement.add(forwardVector.clone().multiplyScalar(-controls.movementSpeed * delta));
-            // Right vector
-            const rightVector = new _three.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-            if (controls.moveState.right) movement.add(rightVector.clone().multiplyScalar(controls.movementSpeed * delta));
-            if (controls.moveState.left) movement.add(rightVector.clone().multiplyScalar(-controls.movementSpeed * delta));
-            // Up/down movement (using R/F keys)
-            const upVector = new _three.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
-            // Process normal up/down movement (R/F keys)
-            if (controls.moveState.up) movement.add(upVector.clone().multiplyScalar(controls.movementSpeed * delta));
-            if (controls.moveState.down) movement.add(upVector.clone().multiplyScalar(-controls.movementSpeed * delta));
-        }
-        // Always add the current movement to velocity, whether from jetpack or WASD
-        controls.velocity.add(movement);
-        // Apply light inertia - gradual slowdown when jetpack turns off
-        // Lower damping means more inertia (slower slowdown)
-        controls.velocity.multiplyScalar(1 - controls.damping * delta);
-        // Apply half-gravity pullback - slowly pull down in world-space Y axis
-        // This simulates a floating feel in low-gravity
-        if (!controls.moveState.up && !controls.moveState.down) // Only apply gravity when not explicitly moving up/down
-        controls.velocity.y -= controls.gravity * delta;
-        // Apply velocity to camera position for actual movement
-        camera.position.add(controls.velocity.clone().multiplyScalar(delta));
-        // Log physics state for debugging
-        if (frameCounter % logInterval === 0) console.log(`Physics: velocity=(${controls.velocity.x.toFixed(2)}, ${controls.velocity.y.toFixed(2)}, ${controls.velocity.z.toFixed(2)}), damping=${controls.damping}, gravity=${controls.gravity}`);
-    } else // OrbitControls just needs regular update
-    controls.update();
-    // Subtle starfield rotation
-    if (starfield) {
-        starfield.rotation.y += delta * 0.01;
-        starfield.rotation.x += delta * 0.005;
-    }
-    // Update Level 2 cluster orbits
-    if (typeof level2Groups !== 'undefined') level2Groups.forEach((group)=>{
-        if (group && group.children) group.children.forEach((cluster)=>{
-            if (cluster && cluster.userData) {
-                // Get parent reference and orbit data
-                const parentSprite = cluster.userData.parentSprite;
-                if (parentSprite) {
-                    // For hollow spherical shells, we maintain the sphere structure
-                    // and rotate the entire sphere around its center (the parent node)
-                    // Get parent position and rotation data
-                    const parentPos = parentSprite.position;
-                    // Apply rotation to the entire spherical shell group
-                    // This maintains the hollow sphere structure while animating
-                    // Create rotation quaternion based on time and random axis
-                    const rotationSpeed = cluster.userData.rotationSpeed;
-                    const rotationAxis = cluster.userData.rotationAxis;
-                    // Apply incremental rotation to the entire group
-                    cluster.rotateOnAxis(rotationAxis, delta * rotationSpeed);
-                    // Update the center position to follow the parent node
-                    cluster.position.set(parentPos.x, parentPos.y, parentPos.z);
-                    // No need to update individual wallet positions as they are fixed
-                    // relative to the sphere center and rotate with the whole group
-                    // Add slight rotation to the entire cluster
-                    cluster.rotation.z += delta * 0.1;
-                }
-            }
-        });
-    });
-    // Check for invalid camera position (but without excessive logging)
-    frameCounter++;
-    if (frameCounter % logInterval === 0) {
-        // Check for invalid camera position
-        if (isNaN(camera.position.x) || isNaN(camera.position.y) || isNaN(camera.position.z)) {
-            camera.position.copy(initialCameraPosition);
-            if (controlType === 'Orbit') controls.target.copy(initialCameraTarget);
-            else camera.lookAt(initialCameraTarget);
-            if (controlType === 'Fly') controls.update(delta);
-            else controls.update();
-        }
-        if (frameCounter > 1000) frameCounter = 0;
-    }
-    // Perform raycasting for hover detection
-    raycaster.setFromCamera(mouse, camera);
-    // Debug: Log raycaster status every few frames
-    if (frameCounter % 120 === 0) {
-        console.log(`Raycaster origin: (${raycaster.ray.origin.x.toFixed(2)}, ${raycaster.ray.origin.y.toFixed(2)}, ${raycaster.ray.origin.z.toFixed(2)})`);
-        console.log(`Raycaster direction: (${raycaster.ray.direction.x.toFixed(2)}, ${raycaster.ray.direction.y.toFixed(2)}, ${raycaster.ray.direction.z.toFixed(2)})`);
-    }
-    // Create array of all point clouds to raycast against
-    const pointGroups = [];
-    // Add all wallet groups to raycasting targets
-    const sharedGroup = scene.getObjectByName('sharedWallets');
-    const fartcoinGroup = scene.getObjectByName('fartcoinWallets');
-    const goatTokenGroup = scene.getObjectByName('goatTokenWallets');
-    // Debug: Log group existence
-    if (frameCounter % 120 === 0) console.log(`Wallet groups found: shared=${!!sharedGroup}, fartcoin=${!!fartcoinGroup}, goat=${!!goatTokenGroup}`);
-    if (sharedGroup) pointGroups.push(sharedGroup);
-    if (fartcoinGroup) pointGroups.push(fartcoinGroup);
-    if (goatTokenGroup) pointGroups.push(goatTokenGroup);
-    // Get wallet points to test against
-    let allWalletPoints = [];
-    pointGroups.forEach((group)=>{
-        if (group && group.children) allWalletPoints = allWalletPoints.concat(group.children);
-    });
-    // DEBUG v30: Include ALL wallet points in hover detection, regardless of type
-    // Previously we were filtering out Level 1 wallet nodes, but that might be part of the hover issue
-    let filteredWalletPoints = allWalletPoints;
-    // Keep track of how many points would have been filtered out for debugging
-    let levelOneWallets = allWalletPoints.filter((point)=>point.userData?.isLevel1Wallet);
-    let smallWalletPoints = allWalletPoints.filter((point)=>!point.userData?.isLevel1Wallet);
-    // Debug: Log wallet points count with more details
-    if (frameCounter % 120 === 0) {
-        console.log(`DEBUG v30: Raycast targets: All ${allWalletPoints.length} wallet points (${levelOneWallets.length} Level 1 wallets, ${smallWalletPoints.length} small wallet points)`);
-        console.log(`DEBUG v30: Previously would have included only ${smallWalletPoints.length} points`);
-    }
-    // Get camera distance to scene center for distance check
-    const cameraDistanceToCenter = camera.position.length();
-    const maxInteractionDistance = 50000; // Increased from 10000 to 50000 to allow hover from farther away
-    // Perform raycast - temporarily remove distance restriction to debug hover issues
-    let intersects = [];
-    // DEBUG v30: Removed distance check to ensure hover works regardless of camera position
-    intersects = raycaster.intersectObjects(filteredWalletPoints, false);
-    // Debug log distance and if distance would have blocked hover
-    if (frameCounter % 60 === 0) console.log(`DEBUG v30: Camera distance: ${cameraDistanceToCenter.toFixed(2)}, would hover be disabled? ${cameraDistanceToCenter > maxInteractionDistance}`);
-    // DEBUG v30: Enhanced logging for hover debugging
-    if (frameCounter % 60 === 0) {
-        console.log(`Camera distance to center: ${cameraDistanceToCenter.toFixed(2)}, max interaction: ${maxInteractionDistance}`);
-        console.log(`Hover enabled: Always enabled for debugging in v30 (would be ${cameraDistanceToCenter <= maxInteractionDistance} with distance check)`);
-        if (intersects.length > 0) {
-            console.log(`DEBUG v30: Found ${intersects.length} intersections with wallet points`);
-            // Log details of the first 3 intersections
-            for(let i = 0; i < Math.min(3, intersects.length); i++){
-                const obj = intersects[i].object;
-                console.log(`DEBUG v30: Intersection ${i + 1}: distance=${intersects[i].distance.toFixed(2)}, ` + `type=${obj.userData?.isLevel1Wallet ? 'Level 1 Wallet' : 'Small Wallet Point'}, ` + `has wallet data: ${!!obj.userData?.walletData}, ` + `material: ${!!obj.material}, ` + `visible: ${!!obj.visible}`);
-            }
-        } else {
-            console.log(`DEBUG v30: NO INTERSECTIONS FOUND with ${filteredWalletPoints.length} wallet points`);
-            console.log(`DEBUG v30: Raycaster params:`, raycaster.params);
-        }
-    }
-    // Handle tooltip and hover effects
-    if (intersects.length > 0) {
-        const object = intersects[0].object;
-        // Only process if the object has wallet data
-        if (object.userData && object.userData.walletData) {
-            // Debug: Log wallet data found
-            if (frameCounter % 30 === 0) console.log('Found wallet data in intersection:', object.userData.walletData);
-            // If hovering over a new object
-            if (hoveredObject !== object) {
-                console.log('Hovering over new wallet:', object.userData.walletData.address);
-                // Reset previous hover state
-                if (hoveredObject) {
-                    console.log('Resetting previous hover state');
-                    // Restore original scale and color
-                    hoveredObject.scale.set(hoveredObject.userData.originalScale, hoveredObject.userData.originalScale, 1);
-                    // Restore original color
-                    if (hoveredObject.material) {
-                        console.log(`Restoring original color: ${hoveredObject.userData.originalColor}`);
-                        hoveredObject.material.color.set(hoveredObject.userData.originalColor);
-                    } else console.warn('Previous hovered object has no material');
-                }
-                // Set new hovered object
-                hoveredObject = object;
-                console.log('Set new hovered object');
-                // Scale up and brighten the hovered object - make it MUCH larger for visibility
-                const newScale = object.userData.originalScale * 3; // Increased from 1.5 to 3 for better visibility
-                console.log(`Scaling up to: ${newScale} (original: ${object.userData.originalScale})`);
-                object.scale.set(newScale, newScale, 1);
-                // Add pulsing animation for extra visibility
-                object.userData.pulseAnimation = true;
-                object.userData.pulseTime = 0;
-                // Brighten the color
-                if (object.material) {
-                    console.log('Brightening the color of hovered object');
-                    // Store original color if not already stored
-                    if (!object.userData.storedOriginalColor) {
-                        object.userData.storedOriginalColor = object.material.color.clone();
-                        console.log('Stored original color');
+                // Deactivate jetpack when Left Shift is released
+                if (controls.jetpackActive) console.log('Jetpack deactivated');
+                controls.jetpackActive = false;
+                // Recharge fuel when not using jetpack
+                if (controlType === 'Fly' && controls.jetpackFuel < controls.jetpackMaxFuel) {
+                    const previousFuel = controls.jetpackFuel;
+                    controls.jetpackFuel = Math.min(controls.jetpackMaxFuel, controls.jetpackFuel + controls.jetpackRefillRate * delta * 60);
+                    // Log fuel recharge
+                    if (frameCounter % logInterval === 0) console.log(`Recharging fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Refill rate: ${controls.jetpackRefillRate}`);
+                    // Re-enable jetpack if fuel reaches minimum threshold
+                    if (!controls.jetpackEnabled && controls.jetpackFuel >= controls.jetpackMinFuelToReactivate) {
+                        controls.jetpackEnabled = true;
+                        console.log('Jetpack re-enabled: Sufficient fuel');
                     }
-                    // Create brighter version of the original color
-                    const origColor = new _three.Color(object.userData.originalColor);
-                    console.log(`Original color: r=${origColor.r.toFixed(2)}, g=${origColor.g.toFixed(2)}, b=${origColor.b.toFixed(2)}`);
-                    const brighterColor = new _three.Color(Math.min(1, origColor.r * hoverBrightnessFactor), Math.min(1, origColor.g * hoverBrightnessFactor), Math.min(1, origColor.b * hoverBrightnessFactor));
-                    console.log(`Brighter color: r=${brighterColor.r.toFixed(2)}, g=${brighterColor.g.toFixed(2)}, b=${brighterColor.b.toFixed(2)}`);
-                    // Apply brighter color
-                    object.material.color.copy(brighterColor);
-                    console.log('Applied brighter color');
-                } else console.warn('Hovered object has no material');
-                // Show both the HTML tooltip and 3D tooltip for redundancy
-                console.log('Showing wallet tooltips (HTML and 3D)');
-                const walletData = object.userData.walletData;
-                // Log the data for debugging
-                console.log(`Wallet Data: Address=${walletData.address}, Fart=${walletData.fartAmount}, Goat=${walletData.goatAmount}`);
-                // Show HTML tooltip with our direct fix
-                if (tooltip) {
-                    // Get mouse position from event
-                    const mouseX = event?.clientX || (mouse.x + 1) * window.innerWidth / 2;
-                    const mouseY = event?.clientY || (1 - mouse.y) * window.innerHeight / 2;
-                    // Show the HTML tooltip
-                    (0, _directTooltipFixJs.showTooltip)(tooltip, mouseX, mouseY, walletData);
-                    console.log('HTML tooltip shown with direct fix');
-                } else {
-                    console.error('HTML tooltip element still missing, trying to recreate');
-                    tooltip = (0, _directTooltipFixJs.createTooltipIfMissing)();
                 }
-                // Also show 3D tooltip with wallet data as backup
-                walletTooltip.show(walletData, object.position.clone());
+            }
+            // Update fuel meter UI
+            if (fuelLevelElement) {
+                const fuelPercentage = controls.jetpackFuel / controls.jetpackMaxFuel * 100;
+                // Ensure the fuel bar is visible with high z-index
+                const fuelBar = document.getElementById('fuel-bar');
+                if (fuelBar) {
+                    fuelBar.style.display = 'block';
+                    fuelBar.style.zIndex = '1000'; // Ensure it's above other elements
+                    fuelBar.style.opacity = '1'; // Make fully visible
+                }
+                // Update the width of the fuel level
+                fuelLevelElement.style.width = `${fuelPercentage}%`;
+                // Change color based on fuel level with more vibrant colors
+                if (fuelPercentage < 20) fuelLevelElement.style.backgroundColor = '#ff3333'; // Bright red when low
+                else if (fuelPercentage < 50) fuelLevelElement.style.backgroundColor = '#ffcc00'; // Bright yellow when medium
+                else fuelLevelElement.style.backgroundColor = '#33ff33'; // Bright green when high
+                // Add a strong glow effect when jetpack is active
+                if (controls.jetpackActive) {
+                    fuelLevelElement.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.9)';
+                    // Pulse effect for active jetpack
+                    const pulseValue = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+                    fuelLevelElement.style.opacity = pulseValue.toString();
+                } else {
+                    fuelLevelElement.style.boxShadow = '0 0 5px rgba(255, 255, 255, 0.5)';
+                    fuelLevelElement.style.opacity = '1';
+                }
+                // Log fuel bar updates
+                if (frameCounter % logInterval === 0) console.log(`Updated fuel bar: width=${fuelPercentage.toFixed(1)}%, active=${controls.jetpackActive}`);
+            } else console.warn('Fuel level element not found in the DOM');
+            // Get the camera's forward direction
+            const forwardVector = new _three.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            // Calculate movement from FlyControls' internal state
+            let movement = new _three.Vector3();
+            // Apply standard FlyControls update for basic movement only if not stopped
+            if (!stopRotating) controls.update(delta);
+            // Handle jetpack mechanics with shift key
+            if (controls.jetpackActive && controls.jetpackEnabled) {
+                // Get the camera's forward direction for jetpack thrust
+                const jetpackThrustVector = forwardVector.clone();
+                // Apply strong forward thrust in the camera's direction when jetpack is active
+                // Multiply by the boost factor to make it significantly faster
+                const jetpackSpeed = controls.movementSpeed * controls.jetpackBoostFactor;
+                // Add a strong forward boost to camera position directly
+                camera.position.add(jetpackThrustVector.multiplyScalar(jetpackSpeed * delta * 2));
+                // Add a stronger upward boost for better flying feel
+                const upVector = new _three.Vector3(0, 1, 0);
+                camera.position.add(upVector.multiplyScalar(controls.movementSpeed * delta));
+                // Visual feedback for jetpack activation
+                if (frameCounter % logInterval === 0) console.log(`Jetpack boost applied: speed=${jetpackSpeed}, fuel=${controls.jetpackFuel.toFixed(1)}`);
+                // Debug logging for jetpack thrust
+                if (frameCounter % logInterval === 0) console.log(`Applying jetpack thrust: speed=${jetpackSpeed}, direction=(${jetpackThrustVector.x.toFixed(2)}, ${jetpackThrustVector.y.toFixed(2)}, ${jetpackThrustVector.z.toFixed(2)})`);
+            }
+            // Apply momentum and damping for zero-gravity drift
+            // Only apply normal WASD movement if jetpack is not active
+            if (!controls.jetpackActive && (controls.moveState.forward || controls.moveState.back || controls.moveState.left || controls.moveState.right || controls.moveState.up || controls.moveState.down)) {
+                // If keys are pressed and jetpack is not active, add their effect to velocity
+                if (controls.moveState.forward) movement.add(forwardVector.clone().multiplyScalar(controls.movementSpeed * delta));
+                if (controls.moveState.back) movement.add(forwardVector.clone().multiplyScalar(-controls.movementSpeed * delta));
+                // Right vector
+                const rightVector = new _three.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                if (controls.moveState.right) movement.add(rightVector.clone().multiplyScalar(controls.movementSpeed * delta));
+                if (controls.moveState.left) movement.add(rightVector.clone().multiplyScalar(-controls.movementSpeed * delta));
+                // Up/down movement (using R/F keys)
+                const upVector = new _three.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+                // Process normal up/down movement (R/F keys)
+                if (controls.moveState.up) movement.add(upVector.clone().multiplyScalar(controls.movementSpeed * delta));
+                if (controls.moveState.down) movement.add(upVector.clone().multiplyScalar(-controls.movementSpeed * delta));
+            }
+            // Always add the current movement to velocity, whether from jetpack or WASD
+            controls.velocity.add(movement);
+            // Apply light inertia - gradual slowdown when jetpack turns off
+            // Lower damping means more inertia (slower slowdown)
+            controls.velocity.multiplyScalar(1 - controls.damping * delta);
+            // Apply half-gravity pullback - slowly pull down in world-space Y axis
+            // This simulates a floating feel in low-gravity
+            if (!controls.moveState.up && !controls.moveState.down) // Only apply gravity when not explicitly moving up/down
+            controls.velocity.y -= controls.gravity * delta;
+            // Apply velocity to camera position for actual movement
+            camera.position.add(controls.velocity.clone().multiplyScalar(delta));
+            // Log physics state for debugging
+            if (frameCounter % logInterval === 0) console.log(`Physics: velocity=(${controls.velocity.x.toFixed(2)}, ${controls.velocity.y.toFixed(2)}, ${controls.velocity.z.toFixed(2)}), damping=${controls.damping}, gravity=${controls.gravity}`);
+        } else // OrbitControls just needs regular update
+        controls.update();
+        // Subtle starfield rotation
+        if (starfield) {
+            starfield.rotation.y += delta * 0.01;
+            starfield.rotation.x += delta * 0.005;
+        }
+        // Update Level 2 cluster orbits
+        if (typeof level2Groups !== 'undefined') level2Groups.forEach((group)=>{
+            if (group && group.children) group.children.forEach((cluster)=>{
+                if (cluster && cluster.userData) {
+                    // Get parent reference and orbit data
+                    const parentSprite = cluster.userData.parentSprite;
+                    if (parentSprite) {
+                        // For hollow spherical shells, we maintain the sphere structure
+                        // and rotate the entire sphere around its center (the parent node)
+                        // Get parent position and rotation data
+                        const parentPos = parentSprite.position;
+                        // Apply rotation to the entire spherical shell group
+                        // This maintains the hollow sphere structure while animating
+                        // Create rotation quaternion based on time and random axis
+                        const rotationSpeed = cluster.userData.rotationSpeed;
+                        const rotationAxis = cluster.userData.rotationAxis;
+                        // Apply incremental rotation to the entire group
+                        cluster.rotateOnAxis(rotationAxis, delta * rotationSpeed);
+                        // Update the center position to follow the parent node
+                        cluster.position.set(parentPos.x, parentPos.y, parentPos.z);
+                        // No need to update individual wallet positions as they are fixed
+                        // relative to the sphere center and rotate with the whole group
+                        // Add slight rotation to the entire cluster
+                        cluster.rotation.z += delta * 0.1;
+                    }
+                }
+            });
+        });
+        // Check for invalid camera position (but without excessive logging)
+        frameCounter++;
+        if (frameCounter % logInterval === 0) {
+            // Check for invalid camera position
+            if (isNaN(camera.position.x) || isNaN(camera.position.y) || isNaN(camera.position.z)) {
+                camera.position.copy(initialCameraPosition);
+                if (controlType === 'Orbit') controls.target.copy(initialCameraTarget);
+                else camera.lookAt(initialCameraTarget);
+                if (controlType === 'Fly') controls.update(delta);
+                else controls.update();
+            }
+            if (frameCounter > 1000) frameCounter = 0;
+        }
+        // Perform raycasting for hover detection
+        raycaster.setFromCamera(mouse, camera);
+        // Debug: Log raycaster status every few frames
+        if (frameCounter % 120 === 0) {
+            console.log(`Raycaster origin: (${raycaster.ray.origin.x.toFixed(2)}, ${raycaster.ray.origin.y.toFixed(2)}, ${raycaster.ray.origin.z.toFixed(2)})`);
+            console.log(`Raycaster direction: (${raycaster.ray.direction.x.toFixed(2)}, ${raycaster.ray.direction.y.toFixed(2)}, ${raycaster.ray.direction.z.toFixed(2)})`);
+        }
+        // Create array of all point clouds to raycast against
+        const pointGroups = [];
+        // Add all wallet groups to raycasting targets
+        const sharedGroup = scene.getObjectByName('sharedWallets');
+        const fartcoinGroup = scene.getObjectByName('fartcoinWallets');
+        const goatTokenGroup = scene.getObjectByName('goatTokenWallets');
+        // Debug: Log group existence
+        if (frameCounter % 120 === 0) console.log(`Wallet groups found: shared=${!!sharedGroup}, fartcoin=${!!fartcoinGroup}, goat=${!!goatTokenGroup}`);
+        if (sharedGroup) pointGroups.push(sharedGroup);
+        if (fartcoinGroup) pointGroups.push(fartcoinGroup);
+        if (goatTokenGroup) pointGroups.push(goatTokenGroup);
+        // Get wallet points to test against
+        let allWalletPoints = [];
+        pointGroups.forEach((group)=>{
+            if (group && group.children) allWalletPoints = allWalletPoints.concat(group.children);
+        });
+        // DEBUG v30: Include ALL wallet points in hover detection, regardless of type
+        // Previously we were filtering out Level 1 wallet nodes, but that might be part of the hover issue
+        let filteredWalletPoints = allWalletPoints;
+        // Keep track of how many points would have been filtered out for debugging
+        let levelOneWallets = allWalletPoints.filter((point)=>point.userData?.isLevel1Wallet);
+        let smallWalletPoints = allWalletPoints.filter((point)=>!point.userData?.isLevel1Wallet);
+        // Debug: Log wallet points count with more details
+        if (frameCounter % 120 === 0) {
+            console.log(`DEBUG v30: Raycast targets: All ${allWalletPoints.length} wallet points (${levelOneWallets.length} Level 1 wallets, ${smallWalletPoints.length} small wallet points)`);
+            console.log(`DEBUG v30: Previously would have included only ${smallWalletPoints.length} points`);
+        }
+        // Get camera distance to scene center for distance check
+        const cameraDistanceToCenter = camera.position.length();
+        const maxInteractionDistance = 50000; // Increased from 10000 to 50000 to allow hover from farther away
+        // Perform raycast - temporarily remove distance restriction to debug hover issues
+        let intersects = [];
+        // DEBUG v30: Removed distance check to ensure hover works regardless of camera position
+        intersects = raycaster.intersectObjects(filteredWalletPoints, false);
+        // Debug log distance and if distance would have blocked hover
+        if (frameCounter % 60 === 0) console.log(`DEBUG v30: Camera distance: ${cameraDistanceToCenter.toFixed(2)}, would hover be disabled? ${cameraDistanceToCenter > maxInteractionDistance}`);
+        // DEBUG v30: Enhanced logging for hover debugging
+        if (frameCounter % 60 === 0) {
+            console.log(`Camera distance to center: ${cameraDistanceToCenter.toFixed(2)}, max interaction: ${maxInteractionDistance}`);
+            console.log(`Hover enabled: Always enabled for debugging in v30 (would be ${cameraDistanceToCenter <= maxInteractionDistance} with distance check)`);
+            if (intersects.length > 0) {
+                console.log(`DEBUG v30: Found ${intersects.length} intersections with wallet points`);
+                // Log details of the first 3 intersections
+                for(let i = 0; i < Math.min(3, intersects.length); i++){
+                    const obj = intersects[i].object;
+                    console.log(`DEBUG v30: Intersection ${i + 1}: distance=${intersects[i].distance.toFixed(2)}, ` + `type=${obj.userData?.isLevel1Wallet ? 'Level 1 Wallet' : 'Small Wallet Point'}, ` + `has wallet data: ${!!obj.userData?.walletData}, ` + `material: ${!!obj.material}, ` + `visible: ${!!obj.visible}`);
+                }
+            } else {
+                console.log(`DEBUG v30: NO INTERSECTIONS FOUND with ${filteredWalletPoints.length} wallet points`);
+                console.log(`DEBUG v30: Raycaster params:`, raycaster.params);
             }
         }
-    } else if (hoveredObject) {
-        // No longer hovering over anything, reset state
-        console.log('No longer hovering over anything, resetting state');
-        // Restore original scale
-        hoveredObject.scale.set(hoveredObject.userData.originalScale, hoveredObject.userData.originalScale, 1);
-        // Restore original color
-        if (hoveredObject.material) {
-            console.log(`Restoring original color on hover end: ${hoveredObject.userData.originalColor}`);
-            hoveredObject.material.color.set(hoveredObject.userData.originalColor);
-        } else console.warn('Hovered object has no material when trying to restore color');
-        // Clear hovered object
-        hoveredObject = null;
-        console.log('Cleared hovered object reference');
-        // Hide both tooltips
-        console.log('Hiding both tooltips');
-        walletTooltip.hide();
-        // Also hide HTML tooltip with our direct fix
-        if (tooltip) {
-            (0, _directTooltipFixJs.hideTooltip)(tooltip);
-            console.log('HTML tooltip hidden on hover end');
+        // Handle tooltip and hover effects
+        if (intersects.length > 0) {
+            const object = intersects[0].object;
+            // Only process if the object has wallet data
+            if (object.userData && object.userData.walletData) {
+                // Debug: Log wallet data found
+                if (frameCounter % 30 === 0) console.log('Found wallet data in intersection:', object.userData.walletData);
+                // If hovering over a new object
+                if (hoveredObject !== object) {
+                    console.log('Hovering over new wallet:', object.userData.walletData.address);
+                    // Reset previous hover state
+                    if (hoveredObject) {
+                        console.log('Resetting previous hover state');
+                        // Restore original scale and color
+                        hoveredObject.scale.set(hoveredObject.userData.originalScale, hoveredObject.userData.originalScale, 1);
+                        // Restore original color
+                        if (hoveredObject.material) {
+                            console.log(`Restoring original color: ${hoveredObject.userData.originalColor}`);
+                            hoveredObject.material.color.set(hoveredObject.userData.originalColor);
+                        } else console.warn('Previous hovered object has no material');
+                    }
+                    // Set new hovered object
+                    hoveredObject = object;
+                    console.log('Set new hovered object');
+                    // Scale up and brighten the hovered object - make it MUCH larger for visibility
+                    const newScale = object.userData.originalScale * 3; // Increased from 1.5 to 3 for better visibility
+                    console.log(`Scaling up to: ${newScale} (original: ${object.userData.originalScale})`);
+                    object.scale.set(newScale, newScale, 1);
+                    // Add pulsing animation for extra visibility
+                    object.userData.pulseAnimation = true;
+                    object.userData.pulseTime = 0;
+                    // Brighten the color
+                    if (object.material) {
+                        console.log('Brightening the color of hovered object');
+                        // Store original color if not already stored
+                        if (!object.userData.storedOriginalColor) {
+                            object.userData.storedOriginalColor = object.material.color.clone();
+                            console.log('Stored original color');
+                        }
+                        // Create brighter version of the original color
+                        const origColor = new _three.Color(object.userData.originalColor);
+                        console.log(`Original color: r=${origColor.r.toFixed(2)}, g=${origColor.g.toFixed(2)}, b=${origColor.b.toFixed(2)}`);
+                        const brighterColor = new _three.Color(Math.min(1, origColor.r * hoverBrightnessFactor), Math.min(1, origColor.g * hoverBrightnessFactor), Math.min(1, origColor.b * hoverBrightnessFactor));
+                        console.log(`Brighter color: r=${brighterColor.r.toFixed(2)}, g=${brighterColor.g.toFixed(2)}, b=${brighterColor.b.toFixed(2)}`);
+                        // Apply brighter color
+                        object.material.color.copy(brighterColor);
+                        console.log('Applied brighter color');
+                    } else console.warn('Hovered object has no material');
+                    // Show both the HTML tooltip and 3D tooltip for redundancy
+                    console.log('Showing wallet tooltips (HTML and 3D)');
+                    const walletData = object.userData.walletData;
+                    // Log the data for debugging
+                    console.log(`Wallet Data: Address=${walletData.address}, Fart=${walletData.fartAmount}, Goat=${walletData.goatAmount}`);
+                    // Show HTML tooltip with our direct fix
+                    if (tooltip) {
+                        // Get mouse position from event
+                        const mouseX = event?.clientX || (mouse.x + 1) * window.innerWidth / 2;
+                        const mouseY = event?.clientY || (1 - mouse.y) * window.innerHeight / 2;
+                        // Show the HTML tooltip
+                        (0, _directTooltipFixJs.showTooltip)(tooltip, mouseX, mouseY, walletData);
+                        console.log('HTML tooltip shown with direct fix');
+                    } else {
+                        console.error('HTML tooltip element still missing, trying to recreate');
+                        tooltip = (0, _directTooltipFixJs.createTooltipIfMissing)();
+                    }
+                    // Also show 3D tooltip with wallet data as backup
+                    walletTooltip.show(walletData, object.position.clone());
+                }
+            }
+        } else if (hoveredObject) {
+            // No longer hovering over anything, reset state
+            console.log('No longer hovering over anything, resetting state');
+            // Restore original scale
+            hoveredObject.scale.set(hoveredObject.userData.originalScale, hoveredObject.userData.originalScale, 1);
+            // Restore original color
+            if (hoveredObject.material) {
+                console.log(`Restoring original color on hover end: ${hoveredObject.userData.originalColor}`);
+                hoveredObject.material.color.set(hoveredObject.userData.originalColor);
+            } else console.warn('Hovered object has no material when trying to restore color');
+            // Clear hovered object
+            hoveredObject = null;
+            console.log('Cleared hovered object reference');
+            // Hide both tooltips
+            console.log('Hiding both tooltips');
+            walletTooltip.hide();
+            // Also hide HTML tooltip with our direct fix
+            if (tooltip) {
+                (0, _directTooltipFixJs.hideTooltip)(tooltip);
+                console.log('HTML tooltip hidden on hover end');
+            }
         }
-    }
-    // Update fireworks
-    (0, _fireworksJs.updateFireworks)(scene, delta);
-    // Render the scene
-    renderer.render(scene, camera);
+        // Update fireworks
+        (0, _fireworksJs.updateFireworks)(scene, delta);
+        // Render the scene
+        renderer.render(scene, camera);
+    } // End of !paused block
 }
 animate();
 
@@ -33406,6 +33407,6 @@ function updateFireworks(scene, deltaTime) {
     }
 }
 
-},{"three":"dsoTF","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}]},["6zReE","fILKw"], "fILKw", "parcelRequired5ab", {})
+},{"three":"dsoTF","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}]},["jRVYE","fILKw"], "fILKw", "parcelRequired5ab", {})
 
 //# sourceMappingURL=public.1fcc916e.js.map

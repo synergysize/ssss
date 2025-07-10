@@ -171,8 +171,11 @@ window.addEventListener('keydown', (e) => {
     paused = !paused;
     console.log('Pause state:', paused ? 'PAUSED' : 'RESUMED');
     
-    // You could add a visual pause indicator here
-    // If you want to add a pause indicator to the UI later
+    // Show or hide the pause indicator
+    const pauseIndicator = document.getElementById('pause-indicator');
+    if (pauseIndicator) {
+      pauseIndicator.style.display = paused ? 'block' : 'none';
+    }
   }
 });
 
@@ -1358,8 +1361,8 @@ function animate() {
     // Calculate movement from FlyControls' internal state
     let movement = new THREE.Vector3();
     
-    // Apply standard FlyControls update for basic movement only if not stopped
-    if (!stopRotating) {
+    // Apply standard FlyControls update for basic movement only if not stopped or paused
+    if (!stopRotating && !paused) {
       controls.update(delta);
     }
     

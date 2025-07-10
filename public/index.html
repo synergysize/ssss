@@ -32,13 +32,12 @@
     }
     #contract-address {
       position: absolute;
-      bottom: 20px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 14px;
       font-family: monospace;
+      font-size: 14px;
       color: white;
-      opacity: 0.8;
     }
     #info {
       display: none; /* Hide the info text in the top-left corner */
@@ -48,13 +47,9 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
+      font-size: 14px;
       color: white;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 8px;
-      border-radius: 5px;
-      font-size: 10px;
       text-align: center;
-      font-family: 'Digital', monospace;
     }
     #fuel-bar {
       position: absolute;
@@ -119,6 +114,15 @@
       font-weight: bold;
       color: #ffffff;
     }
+    #pause-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: red;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -126,11 +130,13 @@
     <!-- Header text removed -->
   </div>
   
+  <div id="pause-indicator">PAUSED. PRESS ESC TO UNPAUSE</div>
+  
   <div id="fuel-bar">
     <div id="fuel-level"></div>
   </div>
   
-  <div id="controls">WASD to move</div>
+  <div id="controls">WASD to Move,<br>Hover Mouse to Look Around<br>ESC to Pause</div>
   
   <div id="wallet-tooltip">
     <div class="tooltip-title">Wallet Details</div>

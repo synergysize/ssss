@@ -1,0 +1,7 @@
+This is a placeholder for the screenshot. The actual screenshot would show:
+
+1. Contract address moved to the top of the screen
+2. Updated controls text at the bottom: "WASD to Move, Hover Mouse to Look Around, ESC to Pause"
+3. Pause indicator in the center of the screen (when ESC is pressed)
+4. Cursor remains visible at all times
+5. Camera rotation stops when mouse leaves the window
