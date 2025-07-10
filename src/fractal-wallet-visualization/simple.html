@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Fractal Visualization</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="info">
+        <div class="legend">
+            <div class="legend-item">
+                <span class="color-box fartcoin"></span>
+                <span>Fartcoin Wallets</span>
+            </div>
+            <div class="legend-item">
+                <span class="color-box goattoken"></span>
+                <span>Goattoken Wallets</span>
+            </div>
+        </div>
+        <div id="stats">
+            <div>Total Nodes: <span id="node-count">0</span></div>
+            <div>Fartcoin: <span id="fartcoin-count">0</span></div>
+            <div>Goattoken: <span id="goattoken-count">0</span></div>
+        </div>
+    </div>
+    <div id="tooltip"></div>
+    <div id="canvas-container"></div>
+
+    <!-- Load libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- Load our scripts -->
+    <script src="js/visualizer-simple.js"></script>
+</body>
+</html>

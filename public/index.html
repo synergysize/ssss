@@ -3,14 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blockchain Wallet Visualizer</title>
+  <title>Fractal Wallet Visualization</title>
   <style>
-    @font-face {
-      font-family: 'Digital';
-      src: url('https://fonts.cdnfonts.com/s/29068/digital-7.woff') format('woff');
-      font-weight: normal;
-      font-style: normal;
-    }
     body {
       margin: 0;
       overflow: hidden;
@@ -26,22 +20,43 @@
       cursor: default !important;
     }
     
-    #fuel-bar, #controls, #contract-address {
-      position: absolute;
-      z-index: 10;
-    }
-    #contract-address {
+    #info {
       position: absolute;
       top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: monospace;
-      font-size: 14px;
+      left: 20px;
       color: white;
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
     }
-    #info {
-      display: none; /* Hide the info text in the top-left corner */
+    
+    .legend {
+      margin-bottom: 10px;
     }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    
+    .color-box {
+      width: 15px;
+      height: 15px;
+      margin-right: 8px;
+      border-radius: 3px;
+    }
+    
+    .fartcoin {
+      background-color: #8A2BE2; /* Purple */
+    }
+    
+    .goattoken {
+      background-color: #FFA500; /* Orange */
+    }
+    
     #controls {
       position: absolute;
       bottom: 20px;
@@ -50,28 +65,9 @@
       font-size: 14px;
       color: white;
       text-align: center;
+      z-index: 10;
     }
-    #fuel-bar {
-      position: absolute;
-      bottom: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 12px;
-      background-color: rgba(50, 50, 50, 0.7);
-      border-radius: 4px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      z-index: 100;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.8), inset 0 0 5px rgba(0, 0, 0, 0.5);
-    }
-    #fuel-level {
-      height: 100%;
-      width: 100%;
-      background-color: #22cc22; /* Start with green */
-      transition: width 0.2s, background-color 0.2s;
-      z-index: 101;
-    }
+    
     #wallet-tooltip {
       position: absolute;
       display: none;
@@ -104,10 +100,10 @@
       margin-bottom: 5px;
     }
     .tooltip-fartcoin {
-      color: #88ff88;
+      color: #8A2BE2; /* Purple for Fartcoin */
     }
     .tooltip-goat {
-      color: #8888ff;
+      color: #FFA500; /* Orange for Goattoken */
     }
     .tooltip-total {
       margin-top: 8px;
@@ -122,21 +118,42 @@
       font-size: 24px;
       color: red;
       display: none;
+      z-index: 100;
+    }
+    #contract-address {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: monospace;
+      font-size: 14px;
+      color: white;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
   <div id="info">
-    <!-- Header text removed -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="color-box fartcoin"></span>
+        <span>Fartcoin Wallets</span>
+      </div>
+      <div class="legend-item">
+        <span class="color-box goattoken"></span>
+        <span>Goattoken Wallets</span>
+      </div>
+    </div>
+    <div id="stats">
+      <div>Total Nodes: <span id="node-count">2000</span></div>
+      <div>Fartcoin: <span id="fartcoin-count">1000</span></div>
+      <div>Goattoken: <span id="goattoken-count">1000</span></div>
+    </div>
   </div>
-  
+
   <div id="pause-indicator">PAUSED. PRESS ESC TO UNPAUSE</div>
   
-  <div id="fuel-bar">
-    <div id="fuel-level"></div>
-  </div>
-  
-  <div id="controls">WASD to Move,<br>Hover Mouse to Look Around<br>ESC to Pause</div>
+  <div id="controls">WASD to Move, Mouse to Look<br>ESC to Pause</div>
   
   <div id="wallet-tooltip">
     <div class="tooltip-title">Wallet Details</div>
@@ -148,7 +165,7 @@
     <div class="tooltip-total">Total Value: 0</div>
   </div>
   
-  <div id="contract-address">Contract Address: 9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump</div>
+  <div id="contract-address">Fractal Wallet Visualization</div>
   
   <script type="importmap">
     {
@@ -159,16 +176,6 @@
       }
     }
   </script>
-  <script type="module" src="/src/main.js"></script>
-  <script>
-    // Initialize the fuel level to full
-    window.addEventListener('load', function() {
-      const fuelLevel = document.getElementById('fuel-level');
-      if (fuelLevel) {
-        fuelLevel.style.width = '100%';
-        fuelLevel.style.backgroundColor = '#22cc22';
-      }
-    });
-  </script>
+  <script type="module" src="/fractal-wallet-visualization/main.js"></script>
 </body>
 </html>
