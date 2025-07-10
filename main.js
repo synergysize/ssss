@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
 import { loadWalletData } from './dataLoader.js';
-import { generateFractalPosition, generateNodeSize, getWalletColor } from './fractalPlacement.js';
+import { generateFractalPosition, generateNodeSize, getWalletColor, initGalaxyContainer, galaxyContainer } from './fractalPlacement.js';
 import { TooltipHandler } from './tooltipHandler.js';
 import { createGlowMaterial } from './shaders.js';
 
@@ -16,6 +16,11 @@ let raycaster, mouse;
 let tooltipHandler;
 let hoveredWallet = null;
 let paused = false;
+let galaxyRotationSpeed = 0.0002; // Slow rotation speed for galactic swirl
+let galaxyObject; // Reference to the galaxy container object
+let lastMouseActivity = Date.now(); // Track when mouse was last active
+let mouseInactivityTime = 10000; // 10 seconds of inactivity before auto-rotation
+let isAutoRotating = false;
 let stats = {
   fartcoinCount: 0,
   goattokenCount: 0,
@@ -30,9 +35,12 @@ async function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000011);
   
-  // Create camera
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-  camera.position.z = 350;
+  // Create camera with extended far plane for the larger visualization
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 10, 50000);
+  
+  // Position camera to see the entire galaxy structure
+  camera.position.set(0, 0, 7000);
+  camera.lookAt(0, 0, 0);
   
   // Create renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -49,8 +57,12 @@ async function init() {
   directionalLight.position.set(1, 1, 1);
   scene.add(directionalLight);
   
-  // Add star field background
+  // Add star field background - expanded for larger scale
   createStarField();
+  
+  // Initialize the galaxy container
+  galaxyObject = initGalaxyContainer();
+  scene.add(galaxyObject);
   
   // Initialize controls
   initControls();
@@ -96,16 +108,16 @@ function createStarField() {
   const starGeometry = new THREE.BufferGeometry();
   const starMaterial = new THREE.PointsMaterial({
     color: 0xffffff,
-    size: 0.7,
+    size: 2.5,
     transparent: true,
     opacity: 0.8
   });
   
   const starVertices = [];
-  for (let i = 0; i < 8000; i++) {
-    const x = (Math.random() - 0.5) * 2000;
-    const y = (Math.random() - 0.5) * 2000;
-    const z = (Math.random() - 0.5) * 2000;
+  for (let i = 0; i < 30000; i++) {
+    const x = (Math.random() - 0.5) * 40000;
+    const y = (Math.random() - 0.5) * 40000;
+    const z = (Math.random() - 0.5) * 40000;
     starVertices.push(x, y, z);
   }
   
@@ -113,20 +125,41 @@ function createStarField() {
   const stars = new THREE.Points(starGeometry, starMaterial);
   scene.add(stars);
   
-  // Create a few brighter stars
+  // Create medium brightness stars
+  const mediumStarGeometry = new THREE.BufferGeometry();
+  const mediumStarMaterial = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 5,
+    transparent: true,
+    opacity: 0.9
+  });
+  
+  const mediumStarVertices = [];
+  for (let i = 0; i < 1000; i++) {
+    const x = (Math.random() - 0.5) * 30000;
+    const y = (Math.random() - 0.5) * 30000;
+    const z = (Math.random() - 0.5) * 30000;
+    mediumStarVertices.push(x, y, z);
+  }
+  
+  mediumStarGeometry.setAttribute('position', new THREE.Float32BufferAttribute(mediumStarVertices, 3));
+  const mediumStars = new THREE.Points(mediumStarGeometry, mediumStarMaterial);
+  scene.add(mediumStars);
+  
+  // Create bright stars
   const brightStarGeometry = new THREE.BufferGeometry();
   const brightStarMaterial = new THREE.PointsMaterial({
     color: 0xffffff,
-    size: 1.5,
+    size: 8,
     transparent: true,
     opacity: 1.0
   });
   
   const brightStarVertices = [];
   for (let i = 0; i < 200; i++) {
-    const x = (Math.random() - 0.5) * 1800;
-    const y = (Math.random() - 0.5) * 1800;
-    const z = (Math.random() - 0.5) * 1800;
+    const x = (Math.random() - 0.5) * 25000;
+    const y = (Math.random() - 0.5) * 25000;
+    const z = (Math.random() - 0.5) * 25000;
     brightStarVertices.push(x, y, z);
   }
   
@@ -138,7 +171,7 @@ function createStarField() {
 // Initialize controls
 function initControls() {
   controls = new FlyControls(camera, renderer.domElement);
-  controls.movementSpeed = 100;
+  controls.movementSpeed = 1000; // Increased for the larger scale
   controls.rollSpeed = 0.15;
   controls.dragToLook = true;
   controls.autoForward = false;
@@ -191,11 +224,11 @@ function createWalletVisualization() {
     // Generate position using fractal placement
     const position = generateFractalPosition(index, wallets.length);
     
-    // Generate size based on wallet data
-    const size = generateNodeSize(wallet);
+    // Generate size based on wallet data - scale up for visibility in the larger space
+    const size = generateNodeSize(wallet) * 6;
     
-    // Create geometry
-    const geometry = new THREE.SphereGeometry(size, 24, 24); // Higher detail
+    // Create geometry - fewer subdivisions for better performance with many nodes
+    const geometry = new THREE.SphereGeometry(size, 16, 16);
     
     // Select material based on wallet type
     const material = wallet.type === 'fartcoin' ? fartcoinMaterial : goattokenMaterial;
@@ -205,8 +238,8 @@ function createWalletVisualization() {
     mesh.position.copy(position);
     
     // Add a glow effect using our custom shader
-    const glowSize = size * 1.8;
-    const glowGeometry = new THREE.SphereGeometry(glowSize, 32, 32);
+    const glowSize = size * 2.2; // Larger glow for better visibility
+    const glowGeometry = new THREE.SphereGeometry(glowSize, 24, 24);
     const glowMaterial = wallet.type === 'fartcoin' ? 
       fartcoinShaderMaterial.clone() : 
       goattokenShaderMaterial.clone();
@@ -217,8 +250,8 @@ function createWalletVisualization() {
     // Store reference to wallet data
     mesh.userData.wallet = wallet;
     
-    // Add to scene
-    scene.add(mesh);
+    // Add to galaxy container instead of directly to scene
+    galaxyObject.add(mesh);
     walletNodes.push(mesh);
   });
   
@@ -233,12 +266,7 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Handle mouse movement for raycasting
-function onMouseMove(event) {
-  // Calculate mouse position in normalized device coordinates
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-}
+// This function is replaced by the updated onMouseMove function below
 
 // Handle keyboard input
 function onKeyDown(event) {
@@ -299,6 +327,24 @@ function checkHover() {
   }
 }
 
+// Handle mouse movement for the auto-rotation feature
+function updateMouseActivity() {
+  lastMouseActivity = Date.now();
+  if (isAutoRotating) {
+    isAutoRotating = false;
+  }
+}
+
+// Update mouse movement for raycasting
+function onMouseMove(event) {
+  // Calculate mouse position in normalized device coordinates
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  
+  // Update mouse activity timestamp for auto-rotation
+  updateMouseActivity();
+}
+
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
@@ -309,6 +355,19 @@ function animate() {
     
     // Check for hovering over nodes
     checkHover();
+    
+    // Check if we should start auto-rotation based on mouse inactivity
+    const currentTime = Date.now();
+    if (!isAutoRotating && (currentTime - lastMouseActivity > mouseInactivityTime)) {
+      isAutoRotating = true;
+    }
+    
+    // Apply galaxy rotation if auto-rotating or regardless for slow swirl effect
+    if (galaxyObject) {
+      // Always rotate slightly for the swirling effect, but rotate faster when auto-rotating
+      const rotationSpeed = isAutoRotating ? galaxyRotationSpeed * 2 : galaxyRotationSpeed;
+      galaxyObject.rotation.y += rotationSpeed;
+    }
     
     // Animate the glow effect
     const time = Date.now() * 0.001;

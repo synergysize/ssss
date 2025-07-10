@@ -3,6 +3,18 @@ import * as THREE from 'three';
 
 const PHI = (1 + Math.sqrt(5)) / 2; // Golden ratio
 
+// Scale factor to expand the fractal layout
+const EXPANSION_FACTOR = 20;
+
+// Create a galaxy-like rotating node container
+export let galaxyContainer = null;
+
+// Initialize the galaxy container
+export function initGalaxyContainer() {
+  galaxyContainer = new THREE.Object3D();
+  return galaxyContainer;
+}
+
 // Generate a position for a node based on index using a golden-ratio spiral with concentric shells
 export function generateFractalPosition(index, totalNodes) {
   // Normalize index to [0,1] range
@@ -13,10 +25,11 @@ export function generateFractalPosition(index, totalNodes) {
   const shellIndex = Math.floor(normalizedIndex * shellFactor);
   
   // Calculate radius based on shell - outer shells are farther
-  const baseRadius = 100 + shellIndex * 50;
+  // Apply expansion factor to create a much larger structure
+  const baseRadius = (100 + shellIndex * 50) * EXPANSION_FACTOR;
   
   // Add some randomness to radius
-  const radiusJitter = (Math.random() - 0.5) * 20;
+  const radiusJitter = (Math.random() - 0.5) * 20 * EXPANSION_FACTOR;
   const radius = baseRadius + radiusJitter;
   
   // Use golden angle (derived from golden ratio) for optimal spacing
@@ -28,16 +41,19 @@ export function generateFractalPosition(index, totalNodes) {
   // Vary the distribution in vertical direction using another golden ratio derived value
   const phi = Math.acos(1 - 2 * ((index % (totalNodes / shellFactor)) / (totalNodes / shellFactor)));
   
-  // Convert spherical to Cartesian coordinates
+  // Make the structure more flat like a real galaxy (reduce z values)
+  const flatteningFactor = 0.25; // Smaller values make a flatter structure
+  
+  // Convert spherical to Cartesian coordinates with flattening
   const x = radius * Math.sin(phi) * Math.cos(theta);
   const y = radius * Math.sin(phi) * Math.sin(theta);
-  const z = radius * Math.cos(phi);
+  const z = radius * Math.cos(phi) * flatteningFactor; // Apply flattening to z-axis
   
   // Add fractal-like jitter
-  const jitterAmount = 30;
+  const jitterAmount = 30 * EXPANSION_FACTOR;
   const jitterX = (Math.random() - 0.5) * jitterAmount;
   const jitterY = (Math.random() - 0.5) * jitterAmount;
-  const jitterZ = (Math.random() - 0.5) * jitterAmount;
+  const jitterZ = (Math.random() - 0.5) * jitterAmount * flatteningFactor; // Less jitter in z-axis
   
   return new THREE.Vector3(
     x + jitterX,
