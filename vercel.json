@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "dist/**", "use": "@vercel/static" },
+    { "src": "fractal-wallet-visualization/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/fractal-wallet-visualization/(.*)", "dest": "/fractal-wallet-visualization/$1" },
+    { "src": "/(.*)", "dest": "/dist/$1" }
+  ]
+}
