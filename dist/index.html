@@ -1,50 +1,159 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blockchain Wallet Visualizer</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background-color: #000;
-      font-family: Arial, sans-serif;
-    }
-    canvas {
-      display: block;
-    }
-    #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-    #controls {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      color: white;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 12px;
-    }
-  </style>
+  <style>@font-face {
+  font-family: Digital;
+  src: url("https://fonts.cdnfonts.com/s/29068/digital-7.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  background-color: #000;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+canvas {
+  z-index: 0;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: default !important;
+}
+
+#fuel-bar, #controls, #contract-address {
+  z-index: 10;
+  position: absolute;
+}
+
+#contract-address {
+  color: #fff;
+  opacity: .8;
+  font-family: monospace;
+  font-size: 14px;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#info {
+  display: none;
+}
+
+#controls {
+  color: #fff;
+  text-align: center;
+  background-color: #00000080;
+  border-radius: 5px;
+  padding: 8px;
+  font-family: Digital, monospace;
+  font-size: 10px;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#fuel-bar {
+  z-index: 100;
+  background-color: #323232b3;
+  border: 1px solid #ffffff80;
+  border-radius: 4px;
+  width: 200px;
+  height: 12px;
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  overflow: hidden;
+  transform: translateX(-50%);
+  box-shadow: 0 0 10px #000c, inset 0 0 5px #00000080;
+}
+
+#fuel-level {
+  z-index: 101;
+  background-color: #2c2;
+  width: 100%;
+  height: 100%;
+  transition: width .2s, background-color .2s;
+}
+
+#wallet-tooltip {
+  color: #fff;
+  pointer-events: none;
+  z-index: 1000;
+  background-color: #000c;
+  border: 1px solid #ffffff4d;
+  border-radius: 5px;
+  max-width: 250px;
+  padding: 10px;
+  font-size: 12px;
+  transition: opacity .3s;
+  display: none;
+  position: absolute;
+  box-shadow: 0 0 10px #0064ff80;
+}
+
+.tooltip-title {
+  color: #8cf;
+  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.tooltip-address {
+  color: #acf;
+  word-break: break-all;
+  margin-bottom: 8px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.tooltip-holdings {
+  margin-bottom: 5px;
+}
+
+.tooltip-fartcoin {
+  color: #8f8;
+}
+
+.tooltip-goat {
+  color: #88f;
+}
+
+.tooltip-total {
+  color: #fff;
+  margin-top: 8px;
+  font-weight: bold;
+}
+</style>
 </head>
 <body>
   <div id="info">
-    <h2>3D Blockchain Wallet Visualizer</h2>
-    <p>Interactive 3D visualization - Desktop & Mobile</p>
+    <!-- Header text removed -->
   </div>
   
-  <div id="controls">
-    <p>Left Click: Rotate | Right Click: Pan | Scroll: Zoom</p>
+  <div id="fuel-bar">
+    <div id="fuel-level"></div>
   </div>
+  
+  <div id="controls">WASD to move</div>
+  
+  <div id="wallet-tooltip">
+    <div class="tooltip-title">Wallet Details</div>
+    <div class="tooltip-address">0x0000...0000</div>
+    <div class="tooltip-holdings">
+      <div class="tooltip-fartcoin">💨: 0</div>
+      <div class="tooltip-goat">🐐: 0</div>
+    </div>
+    <div class="tooltip-total">Total Value: 0</div>
+  </div>
+  
+  <div id="contract-address">Contract Address: 9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump</div>
   
   <script type="importmap">
     {
@@ -55,9 +164,16 @@
       }
     }
   </script>
-  <script type="module" src="main.js"></script>
-  
-  <!-- Add console display for debugging -->
-  <div id="console" style="display:none; position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 10px; max-height: 200px; overflow: auto;"></div>
-</body>
-</html>
+  <script type="module" src="/public.1fcc916e.js"></script>
+  <script>// Initialize the fuel level to full
+window.addEventListener('load', function() {
+    const fuelLevel = document.getElementById('fuel-level');
+    if (fuelLevel) {
+        fuelLevel.style.width = '100%';
+        fuelLevel.style.backgroundColor = '#22cc22';
+    }
+});
+
+</script>
+
+</body></html>

@@ -1,0 +1,123 @@
+SSSLAUNCH3 PROJECT - ACTIVE FILES AUDIT
+Date: July 10, 2025
+
+=====================================================================
+OVERVIEW OF PROJECT STRUCTURE
+=====================================================================
+
+The project has multiple configurations and potential deployment paths:
+
+1. Root Directory Configuration:
+   - index.html at the root level
+   - References JS at "./public/src/main.js"
+
+2. Public Directory Configuration (Parcel Source):
+   - public/index.html is specified as the source in package.json
+   - References JS at "./src/main.js"
+
+3. Dist Directory (Built Output):
+   - dist/index.html appears to be an older version
+   - References JS at "main.js" (relative to dist)
+
+4. Duplicate Source Files:
+   - src/ directory at root level (recent modifications)
+   - public/src/ directory (appears to be a duplicate)
+
+=====================================================================
+ACTIVE FILES CURRENTLY BEING SERVED
+=====================================================================
+
+Based on running processes and file modification timestamps, the following 
+files are likely being actively served:
+
+PRIMARY HTML FILE:
+/home/computeruse/.anthropic/ssslaunch3/index.html
+
+REFERENCED JAVASCRIPT FILES:
+- Main Entry Point: /home/computeruse/.anthropic/ssslaunch3/public/src/main.js
+- CDN Imports:
+  * https://unpkg.com/three@0.150.1/build/three.module.js
+  * https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js
+  * https://unpkg.com/three@0.150.1/examples/jsm/controls/FlyControls.js
+
+SUPPORTING JAVASCRIPT MODULES:
+/home/computeruse/.anthropic/ssslaunch3/public/src/dataLoader.js
+/home/computeruse/.anthropic/ssslaunch3/public/src/directTooltipFix.js
+/home/computeruse/.anthropic/ssslaunch3/public/src/fireworks.js
+/home/computeruse/.anthropic/ssslaunch3/public/src/positionMapper.js
+/home/computeruse/.anthropic/ssslaunch3/public/src/tooltipFix.js
+/home/computeruse/.anthropic/ssslaunch3/public/src/walletTooltip.js
+
+STATIC ASSETS:
+/home/computeruse/.anthropic/ssslaunch3/public/fartcoin.csv
+/home/computeruse/.anthropic/ssslaunch3/public/goattoken.csv
+/home/computeruse/.anthropic/ssslaunch3/fart.webp (referenced from code)
+/home/computeruse/.anthropic/ssslaunch3/goat.webp (referenced from code)
+
+=====================================================================
+OUTPUT DIRECTORY ANALYSIS
+=====================================================================
+
+POTENTIAL BUILD OUTPUTS:
+1. /home/computeruse/.anthropic/ssslaunch3/dist/
+   - This appears to be an older build output
+   - Contains bundled JS files with source maps
+   - Contains an outdated index.html
+
+2. The package.json configuration specifies:
+   - Source: "public/index.html"
+   - Build command: "parcel build public/index.html"
+   - This suggests Parcel would output to /dist by default
+
+=====================================================================
+DUPLICATE FILES AND POTENTIAL ISSUES
+=====================================================================
+
+DUPLICATE HTML:
+- /home/computeruse/.anthropic/ssslaunch3/index.html
+- /home/computeruse/.anthropic/ssslaunch3/public/index.html
+- /home/computeruse/.anthropic/ssslaunch3/dist/index.html
+- /home/computeruse/.anthropic/ssslaunch3/backup/ui_polish/index.html
+- /home/computeruse/.anthropic/ssslaunch3/backup/index.html.bak
+
+DUPLICATE JAVASCRIPT:
+- /home/computeruse/.anthropic/ssslaunch3/src/*.js
+- /home/computeruse/.anthropic/ssslaunch3/public/src/*.js
+- /home/computeruse/.anthropic/ssslaunch3/dist/main.js
+- /home/computeruse/.anthropic/ssslaunch3/backup/main.js.original
+- /home/computeruse/.anthropic/ssslaunch3/backup/src/main.js.bak
+- /home/computeruse/.anthropic/ssslaunch3/backup/ui_polish/main.js
+
+POTENTIAL ISSUES:
+1. Script path references differ between root index.html and public/index.html
+2. Recent modifications appear in both /src and /public/src directories
+3. No clear build output is currently being served (appears to be direct source files)
+4. Multiple HTTP servers running on different ports (8000, 8081, 8123, 8888)
+
+=====================================================================
+SYMLINKS AND PATH REDIRECTS
+=====================================================================
+
+NO PROJECT-SPECIFIC SYMLINKS FOUND:
+- All symbolic links are within node_modules and are standard npm package structures
+- No custom symlinks or path redirects detected in the project files
+
+=====================================================================
+CONCLUSION AND RECOMMENDATIONS
+=====================================================================
+
+CURRENT DEPLOYMENT STATUS:
+- The application appears to be served directly from source files
+- Multiple HTTP servers are running on different ports
+- Most recent changes are present in both /src and /public/src directories
+- No automated build process appears to be active
+
+RECOMMENDATIONS:
+1. Consolidate source files to a single location (either /src or /public/src)
+2. Update all HTML files to reference the correct script paths
+3. Implement a clear build process using Parcel as configured in package.json
+4. Remove or archive unused duplicate files
+5. Standardize on a single server instance and port
+
+The project would benefit from a clearer separation between source files and
+build output, as well as a more consistent directory structure.

@@ -160,11 +160,11 @@
       });
     }
   }
-})({"kN58U":[function(require,module,exports,__globalThis) {
+})({"6zReE":[function(require,module,exports,__globalThis) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
-var HMR_SERVER_PORT = 1235;
+var HMR_SERVER_PORT = 3000;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "439701173a9199ea";
 var HMR_USE_SSE = false;
@@ -667,20 +667,32 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"fILKw":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 var _three = require("three");
+var _orbitControlsJs = require("three/examples/jsm/controls/OrbitControls.js");
 var _flyControlsJs = require("three/examples/jsm/controls/FlyControls.js");
 var _dataLoaderJs = require("./dataLoader.js");
 var _positionMapperJs = require("./positionMapper.js");
+var _tooltipFixJs = require("./tooltipFix.js");
+var _tooltipFixJsDefault = parcelHelpers.interopDefault(_tooltipFixJs);
+var _walletTooltipJs = require("./walletTooltip.js");
+var _walletTooltipJsDefault = parcelHelpers.interopDefault(_walletTooltipJs);
+var _directTooltipFixJs = require("./directTooltipFix.js");
+var _directTooltipFixJsDefault = parcelHelpers.interopDefault(_directTooltipFixJs);
+var _fireworksJs = require("./fireworks.js");
+// V31 - Added emojis, enhanced starfield, and constellations
+console.log("Starting 3D Blockchain Visualizer v31 with \uD83D\uDCA8 and \uD83D\uDC10 tokens");
 // Create a point texture for better visibility
 function createPointTexture() {
     const canvas = document.createElement('canvas');
-    canvas.width = 64; // Larger size for better quality
-    canvas.height = 64; // Larger size for better quality
+    canvas.width = 64;
+    canvas.height = 64;
     const context = canvas.getContext('2d');
     const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
-    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.5)');
+    gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.9)');
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.7)');
+    gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.3)');
     gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
     context.fillStyle = gradient;
     context.fillRect(0, 0, 64, 64);
@@ -690,89 +702,1455 @@ function createPointTexture() {
 }
 // Create the point sprite texture
 const pointTexture = createPointTexture();
-console.log('Created point texture for sprites');
 // Initialize the scene, camera, and renderer
 const scene = new _three.Scene();
-const camera = new _three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 20000);
+// Increase far clipping plane to accommodate the larger visualization
+const camera = new _three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 50000);
 const renderer = new _three.WebGLRenderer({
     antialias: true
 });
-// Set up renderer
+// CRITICAL: Set renderer size before anything else
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+// Limit pixel ratio for better performance with 200 points per node
+const limitedPixelRatio = Math.min(window.devicePixelRatio, 1.5);
+renderer.setPixelRatio(limitedPixelRatio);
+// Increase star brightness with tone mapping
+renderer.toneMappingExposure = 1.5; // Increased from 1.2 for better star visibility
 document.body.appendChild(renderer.domElement);
-// Set background color to black
-scene.background = new _three.Color(0x000000);
-// Position the camera to see points better
-camera.position.set(500, 500, 1500);
-camera.lookAt(0, 0, 0);
-// Set up fly controls for space-sim feel
-const controls = new (0, _flyControlsJs.FlyControls)(camera, renderer.domElement);
-controls.movementSpeed = 500; // Increased for faster navigation
-controls.rollSpeed = 0.2;
-controls.autoForward = false;
-controls.dragToLook = false;
-// DATA DEBUGGING - Log wallet data information
-console.log('DATA DEBUGGING:');
-console.log('fartcoinHolders:', (0, _dataLoaderJs.fartcoinHolders).length);
-console.log('goatTokenHolders:', (0, _dataLoaderJs.goatTokenHolders).length);
-console.log('sharedHolders:', (0, _dataLoaderJs.sharedHolders).length);
-// Re-initialize data and regenerate points
-console.log('Ensuring data is initialized...');
-(0, _dataLoaderJs.initializeData)();
-console.log('Regenerating all 3D points...');
-(0, _positionMapperJs.generateAllPoints)();
-// After regeneration, check all data arrays
-console.log('AFTER REGENERATION:');
-console.log('fartcoinHolders:', (0, _dataLoaderJs.fartcoinHolders).length);
-console.log('goatTokenHolders:', (0, _dataLoaderJs.goatTokenHolders).length);
-console.log('sharedHolders:', (0, _dataLoaderJs.sharedHolders).length);
-console.log('sharedPoints:', (0, _positionMapperJs.sharedPoints).length);
-console.log('fartcoinPoints:', (0, _positionMapperJs.fartcoinPoints).length);
-console.log('goatTokenPoints:', (0, _positionMapperJs.goatTokenPoints).length);
-// DISPLAY A SAMPLE TEST SPRITE FROM SHARED POINTS
-if ((0, _positionMapperJs.sharedPoints).length > 0) {
-    const firstSharedPoint = (0, _positionMapperJs.sharedPoints)[0];
-    console.log('Sample shared point:', firstSharedPoint);
-    // Create a single test sprite from the first shared point
-    const testSprite = new _three.Sprite(new _three.SpriteMaterial({
-        color: 0xffffff,
-        map: pointTexture,
+// Set background color to deep space blue
+scene.background = new _three.Color(0x000815);
+// Add strong lighting for better visibility
+const ambientLight = new _three.AmbientLight(0xffffff, 1.0);
+scene.add(ambientLight);
+// Add version display in top-right corner
+const versionDisplay = document.createElement('div');
+versionDisplay.style.position = 'absolute';
+versionDisplay.style.top = '10px';
+versionDisplay.style.right = '10px';
+versionDisplay.style.color = 'white';
+versionDisplay.style.opacity = '0.3';
+versionDisplay.style.fontSize = '16px';
+versionDisplay.style.fontFamily = 'Arial, sans-serif';
+versionDisplay.innerHTML = 'v31';
+document.body.appendChild(versionDisplay);
+const directionalLight = new _three.DirectionalLight(0xffffff, 1.0);
+directionalLight.position.set(1, 1, 1).normalize();
+scene.add(directionalLight);
+// Debug helpers removed for production
+// Define boxCenter at global scope with a default value
+let boxCenter = new _three.Vector3(0, 0, 0);
+// Setup raycaster for hover interactions with massively boosted threshold
+const raycaster = new _three.Raycaster();
+// DEBUG v30: Even more dramatically increase the precision for sprites to ensure we can hit them
+raycaster.params.Sprite = {
+    threshold: 200
+}; // Increased from 50 to 200 for extremely forgiving hover detection
+raycaster.params.Points = {
+    threshold: 20
+}; // Increase Points threshold too just in case
+console.log('DEBUG v30: Raycaster initialized with extremely high sprite threshold:', raycaster.params.Sprite.threshold);
+const mouse = new _three.Vector2();
+let hoveredObject = null;
+let hoveredOriginalScale = null;
+let hoveredOriginalColor = null;
+const hoverScaleFactor = 1.5; // How much to scale up on hover
+const hoverBrightnessFactor = 1.3; // How much to brighten on hover
+// We'll get the tooltip element with a delay to ensure DOM is ready
+let tooltip = null;
+// Function to get tooltip element using our direct fix
+function getTooltipElement() {
+    // Use the direct tooltip fix to create or get the tooltip
+    tooltip = (0, _directTooltipFixJs.createTooltipIfMissing)();
+    console.log('Tooltip element found/created:', tooltip !== null);
+    // Make sure tooltip is invisible initially but ready to be shown
+    if (tooltip) {
+        tooltip.style.display = 'none';
+        tooltip.style.zIndex = '10000'; // Ensure high z-index
+        tooltip.style.backgroundColor = 'rgba(0, 10, 30, 0.95)'; // Darker, more opaque background
+        tooltip.style.border = '2px solid rgba(100, 200, 255, 0.8)'; // Brighter border
+        tooltip.style.boxShadow = '0 0 15px rgba(0, 100, 255, 0.7)'; // Stronger glow effect
+        console.log('Set tooltip to hidden initially with improved visibility settings');
+    }
+}
+// Get tooltip immediately and also with a slight delay to ensure DOM is ready
+getTooltipElement();
+setTimeout(getTooltipElement, 500);
+// Track mouse position for raycasting
+function onMouseMove(event1) {
+    // Calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+    mouse.x = event1.clientX / window.innerWidth * 2 - 1;
+    mouse.y = -(event1.clientY / window.innerHeight) * 2 + 1;
+    // Debug: Log mouse coordinates occasionally
+    if (Math.random() < 0.01) console.log(`Mouse position: (${mouse.x.toFixed(2)}, ${mouse.y.toFixed(2)})`);
+    // Update tooltip position to follow mouse
+    if (tooltip) {
+        // Position tooltip with offset from cursor
+        tooltip.style.left = event1.clientX + 15 + 'px';
+        tooltip.style.top = event1.clientY + 15 + 'px';
+        // If tooltip is visible, make sure it stays visible
+        if (tooltip.style.display === 'block' && hoveredObject) // Re-apply wallet data if available
+        {
+            if (hoveredObject.userData && hoveredObject.userData.walletData) (0, _directTooltipFixJs.updateTooltipContent)(tooltip, hoveredObject.userData.walletData);
+        }
+    } else {
+        // Try to get tooltip again if not found
+        console.warn('Tooltip element not found in the DOM during mouse move, recreating it');
+        tooltip = (0, _directTooltipFixJs.createTooltipIfMissing)();
+    }
+}
+// Add variables to control rotation when mouse leaves/enters screen
+let stopRotating = false;
+window.addEventListener('mouseleave', ()=>stopRotating = true);
+window.addEventListener('mouseenter', ()=>stopRotating = false);
+// Add mouse move listener for hover-based look only
+window.addEventListener('mousemove', onMouseMove, false);
+// Setup for hover-based look
+const canvas = renderer.domElement;
+// Restore pointer lock functionality for mouse look
+canvas.addEventListener('click', function() {
+    canvas.requestPointerLock();
+    console.log('Pointer lock requested');
+});
+document.addEventListener('pointerlockchange', function() {
+    console.log('Pointer lock state changed:', document.pointerLockElement === canvas ? 'locked' : 'unlocked');
+});
+// Function for mouse look movement using pointer lock for better control
+window.addEventListener('mousemove', (e)=>{
+    if (controlType === 'Fly' && controls && !stopRotating) {
+        if (document.pointerLockElement === canvas) {
+            // Use pointer lock movement which gives movementX/Y for better precision
+            const sensitivity = 0.3;
+            controls.mouseX += e.movementX * sensitivity;
+            controls.mouseY += e.movementY * sensitivity;
+            console.log(`Mouse look: movementX=${e.movementX}, movementY=${e.movementY}`);
+        } else {
+            // Fallback to center-based calculation when pointer lock is not active
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const deltaX = e.clientX - centerX;
+            const deltaY = e.clientY - centerY;
+            const sensitivity = 0.05;
+            controls.mouseX = deltaX * sensitivity;
+            controls.mouseY = deltaY * sensitivity;
+        }
+    }
+});
+// Create starfield background
+function createStarfield() {
+    // Create multiple star layers for a more immersive effect
+    const starGroup = new _three.Group();
+    starGroup.name = 'enhancedStarfield';
+    // Create distant background stars (larger count, smaller size)
+    const bgGeometry = new _three.BufferGeometry();
+    const bgStarCount = 8000; // 4x more stars than before
+    const bgPositions = new Float32Array(bgStarCount * 3);
+    const bgSizes = new Float32Array(bgStarCount);
+    const bgColors = new Float32Array(bgStarCount * 3);
+    // Create background stars at random positions with varying colors
+    for(let i = 0; i < bgStarCount; i++){
+        const i3 = i * 3;
+        // Random position in a large sphere around the scene (360° coverage)
+        const radius = 20000 + Math.random() * 10000; // More distant backdrop
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        bgPositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+        bgPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        bgPositions[i3 + 2] = radius * Math.cos(phi);
+        // Random sizes between 0.5 and 2.5 for background stars
+        bgSizes[i] = 0.5 + Math.random() * 2;
+        // Vary star colors between white, blue, and light purple
+        const colorChoice = Math.random();
+        if (colorChoice > 0.7) {
+            // Bluish stars (30%)
+            bgColors[i3] = 0.7 + Math.random() * 0.3; // R
+            bgColors[i3 + 1] = 0.8 + Math.random() * 0.2; // G
+            bgColors[i3 + 2] = 1.0; // B
+        } else if (colorChoice > 0.4) {
+            // Whitish stars (30%)
+            bgColors[i3] = 0.9 + Math.random() * 0.1; // R
+            bgColors[i3 + 1] = 0.9 + Math.random() * 0.1; // G
+            bgColors[i3 + 2] = 0.9 + Math.random() * 0.1; // B
+        } else {
+            // Purple-ish stars (40%)
+            bgColors[i3] = 0.7 + Math.random() * 0.3; // R
+            bgColors[i3 + 1] = 0.4 + Math.random() * 0.3; // G
+            bgColors[i3 + 2] = 0.9 + Math.random() * 0.1; // B
+        }
+    }
+    bgGeometry.setAttribute('position', new _three.BufferAttribute(bgPositions, 3));
+    bgGeometry.setAttribute('size', new _three.BufferAttribute(bgSizes, 1));
+    bgGeometry.setAttribute('color', new _three.BufferAttribute(bgColors, 3));
+    // Background star material with colors
+    const bgStarMaterial = new _three.PointsMaterial({
+        size: 2,
+        transparent: true,
+        opacity: 0.8,
+        vertexColors: true,
+        sizeAttenuation: true,
+        blending: _three.AdditiveBlending
+    });
+    // Create background stars and add to group
+    const bgStars = new _three.Points(bgGeometry, bgStarMaterial);
+    bgStars.name = 'backgroundStars';
+    starGroup.add(bgStars);
+    // Create Milky Way galaxy band
+    const galaxyGeometry = new _three.BufferGeometry();
+    const galaxyStarCount = 5000;
+    const galaxyPositions = new Float32Array(galaxyStarCount * 3);
+    const galaxySizes = new Float32Array(galaxyStarCount);
+    const galaxyColors = new Float32Array(galaxyStarCount * 3);
+    // Create a band that wraps around like a galaxy
+    for(let i = 0; i < galaxyStarCount; i++){
+        const i3 = i * 3;
+        // Create a disk-like distribution for the galaxy band
+        const radius = 15000 + Math.random() * 7000;
+        const theta = Math.random() * Math.PI * 2;
+        // Add some thickness to the galactic plane
+        const height = (Math.random() - 0.5) * 2000;
+        galaxyPositions[i3] = radius * Math.cos(theta);
+        galaxyPositions[i3 + 1] = height; // Small vertical spread
+        galaxyPositions[i3 + 2] = radius * Math.sin(theta);
+        // Larger sizes for galaxy dust
+        galaxySizes[i] = 2 + Math.random() * 5;
+        // Beautiful nebula colors: purples, blues and hints of teal
+        const nebulaChoice = Math.random();
+        if (nebulaChoice > 0.7) {
+            // Purple hues
+            galaxyColors[i3] = 0.6 + Math.random() * 0.3; // R
+            galaxyColors[i3 + 1] = 0.3 + Math.random() * 0.2; // G
+            galaxyColors[i3 + 2] = 0.8 + Math.random() * 0.2; // B
+        } else if (nebulaChoice > 0.4) {
+            // Blue hues
+            galaxyColors[i3] = 0.2 + Math.random() * 0.2; // R
+            galaxyColors[i3 + 1] = 0.4 + Math.random() * 0.3; // G
+            galaxyColors[i3 + 2] = 0.8 + Math.random() * 0.2; // B
+        } else {
+            // Teal/cyan hues
+            galaxyColors[i3] = 0.1 + Math.random() * 0.2; // R
+            galaxyColors[i3 + 1] = 0.6 + Math.random() * 0.3; // G
+            galaxyColors[i3 + 2] = 0.7 + Math.random() * 0.3; // B
+        }
+    }
+    galaxyGeometry.setAttribute('position', new _three.BufferAttribute(galaxyPositions, 3));
+    galaxyGeometry.setAttribute('size', new _three.BufferAttribute(galaxySizes, 1));
+    galaxyGeometry.setAttribute('color', new _three.BufferAttribute(galaxyColors, 3));
+    // Galaxy material with soft glow
+    const galaxyMaterial = new _three.PointsMaterial({
+        size: 3,
+        transparent: true,
+        opacity: 0.7,
+        vertexColors: true,
+        sizeAttenuation: true,
+        blending: _three.AdditiveBlending
+    });
+    // Create galaxy band and add to group
+    const galaxyBand = new _three.Points(galaxyGeometry, galaxyMaterial);
+    galaxyBand.name = 'galaxyBand';
+    starGroup.add(galaxyBand);
+    // Add the starfield group to the scene
+    scene.add(starGroup);
+    // Create constellations (will be implemented in a separate function)
+    createConstellations(starGroup);
+    return starGroup;
+}
+// Create the constellations
+function createConstellations(starGroup) {
+    // Create goat constellation
+    const goatConstellation = createGoatConstellation();
+    goatConstellation.name = 'goatConstellation';
+    goatConstellation.userData = {
+        isConstellation: true,
+        constellationType: 'goat',
+        lastPulseTime: 0,
+        shouldPulse: false
+    };
+    starGroup.add(goatConstellation);
+    // Create butt constellation
+    const buttConstellation = createButtConstellation();
+    buttConstellation.name = 'buttConstellation';
+    buttConstellation.userData = {
+        isConstellation: true,
+        constellationType: 'butt',
+        lastPulseTime: 0,
+        shouldPulse: false
+    };
+    starGroup.add(buttConstellation);
+    // Schedule random pulsing for constellations
+    setInterval(()=>{
+        // Randomly decide which constellation to pulse
+        if (Math.random() > 0.6) {
+            if (Math.random() > 0.5) {
+                goatConstellation.userData.shouldPulse = true;
+                goatConstellation.userData.lastPulseTime = 0;
+            } else {
+                buttConstellation.userData.shouldPulse = true;
+                buttConstellation.userData.lastPulseTime = 0;
+            }
+        }
+    }, 8000); // Check every 8 seconds
+}
+// Create a goat-shaped constellation
+function createGoatConstellation() {
+    const group = new _three.Group();
+    // Define the star positions for a simple goat shape
+    const starPositions = [
+        // Head
+        new _three.Vector3(-3000, 3000, -12000),
+        new _three.Vector3(-2500, 3800, -12000),
+        new _three.Vector3(-2000, 3500, -12000),
+        new _three.Vector3(-1500, 3200, -12000),
+        // Horns
+        new _three.Vector3(-2500, 4500, -12000),
+        new _three.Vector3(-2000, 4800, -12000),
+        new _three.Vector3(-1600, 4500, -12000),
+        // Body
+        new _three.Vector3(-1000, 3000, -12000),
+        new _three.Vector3(-500, 2800, -12000),
+        new _three.Vector3(0, 2600, -12000),
+        new _three.Vector3(500, 2700, -12000),
+        new _three.Vector3(1000, 2800, -12000),
+        // Legs
+        new _three.Vector3(-500, 2800, -12000),
+        new _three.Vector3(-500, 2000, -12000),
+        new _three.Vector3(-400, 1500, -12000),
+        new _three.Vector3(500, 2700, -12000),
+        new _three.Vector3(500, 2000, -12000),
+        new _three.Vector3(600, 1500, -12000),
+        // Tail
+        new _three.Vector3(1000, 2800, -12000),
+        new _three.Vector3(1200, 3000, -12000)
+    ];
+    // Create a bright star at each position
+    starPositions.forEach((position, i)=>{
+        const star = createBrightStar(0xccffff, 4 + Math.random() * 3);
+        star.position.copy(position);
+        star.userData = {
+            index: i,
+            isConstellationStar: true
+        };
+        group.add(star);
+    });
+    // Create lines connecting the stars
+    const lineConnections = [
+        [
+            0,
+            1
+        ],
+        [
+            1,
+            2
+        ],
+        [
+            2,
+            3
+        ],
+        [
+            1,
+            4
+        ],
+        [
+            4,
+            5
+        ],
+        [
+            5,
+            6
+        ],
+        [
+            3,
+            7
+        ],
+        [
+            7,
+            8
+        ],
+        [
+            8,
+            9
+        ],
+        [
+            9,
+            10
+        ],
+        [
+            10,
+            11
+        ],
+        [
+            8,
+            12
+        ],
+        [
+            12,
+            13
+        ],
+        [
+            13,
+            14
+        ],
+        [
+            9,
+            15
+        ],
+        [
+            15,
+            16
+        ],
+        [
+            16,
+            17
+        ],
+        [
+            11,
+            18
+        ],
+        [
+            18,
+            19
+        ] // Tail
+    ];
+    // Create connecting lines
+    lineConnections.forEach(([fromIndex, toIndex])=>{
+        const from = starPositions[fromIndex];
+        const to = starPositions[toIndex];
+        const lineMaterial = new _three.LineBasicMaterial({
+            color: 0x88ccff,
+            transparent: true,
+            opacity: 0.3,
+            blending: _three.AdditiveBlending
+        });
+        const lineGeometry = new _three.BufferGeometry().setFromPoints([
+            from,
+            to
+        ]);
+        const line = new _three.Line(lineGeometry, lineMaterial);
+        line.userData = {
+            isConstellationLine: true
+        };
+        group.add(line);
+    });
+    // Add a subtle glow around the constellation
+    const glowMaterial = new _three.SpriteMaterial({
+        map: createGlowTexture(128, 'rgba(150, 200, 255, 0.2)'),
+        transparent: true,
+        opacity: 0.4,
+        blending: _three.AdditiveBlending
+    });
+    const glow = new _three.Sprite(glowMaterial);
+    glow.scale.set(6000, 5000, 1);
+    glow.position.set(-1000, 3000, -12100); // Slightly behind the constellation
+    glow.userData = {
+        isConstellationGlow: true
+    };
+    group.add(glow);
+    return group;
+}
+// Create a butt-shaped constellation
+function createButtConstellation() {
+    const group = new _three.Group();
+    // Define the star positions for a simple butt shape
+    const starPositions = [
+        // Left cheek outline
+        new _three.Vector3(6000, 2000, -13000),
+        new _three.Vector3(5500, 2500, -13000),
+        new _three.Vector3(5000, 2800, -13000),
+        new _three.Vector3(4500, 2900, -13000),
+        new _three.Vector3(4000, 2800, -13000),
+        // Center divide
+        new _three.Vector3(3500, 2500, -13000),
+        // Right cheek outline
+        new _three.Vector3(3000, 2800, -13000),
+        new _three.Vector3(2500, 2900, -13000),
+        new _three.Vector3(2000, 2800, -13000),
+        new _three.Vector3(1500, 2500, -13000),
+        new _three.Vector3(1000, 2000, -13000),
+        // Bottom connector
+        new _three.Vector3(2000, 1500, -13000),
+        new _three.Vector3(3500, 1300, -13000),
+        new _three.Vector3(5000, 1500, -13000)
+    ];
+    // Create a bright star at each position
+    starPositions.forEach((position, i)=>{
+        const star = createBrightStar(0xffccaa, 4 + Math.random() * 3);
+        star.position.copy(position);
+        star.userData = {
+            index: i,
+            isConstellationStar: true
+        };
+        group.add(star);
+    });
+    // Create lines connecting the stars
+    const lineConnections = [
+        [
+            0,
+            1
+        ],
+        [
+            1,
+            2
+        ],
+        [
+            2,
+            3
+        ],
+        [
+            3,
+            4
+        ],
+        [
+            4,
+            5
+        ],
+        [
+            5,
+            6
+        ],
+        [
+            6,
+            7
+        ],
+        [
+            7,
+            8
+        ],
+        [
+            8,
+            9
+        ],
+        [
+            9,
+            10
+        ],
+        [
+            10,
+            11
+        ],
+        [
+            11,
+            12
+        ],
+        [
+            12,
+            13
+        ],
+        [
+            13,
+            0
+        ] // Bottom back to start
+    ];
+    // Create connecting lines
+    lineConnections.forEach(([fromIndex, toIndex])=>{
+        const from = starPositions[fromIndex];
+        const to = starPositions[toIndex];
+        const lineMaterial = new _three.LineBasicMaterial({
+            color: 0xffaa88,
+            transparent: true,
+            opacity: 0.3,
+            blending: _three.AdditiveBlending
+        });
+        const lineGeometry = new _three.BufferGeometry().setFromPoints([
+            from,
+            to
+        ]);
+        const line = new _three.Line(lineGeometry, lineMaterial);
+        line.userData = {
+            isConstellationLine: true
+        };
+        group.add(line);
+    });
+    // Add a subtle glow around the constellation
+    const glowMaterial = new _three.SpriteMaterial({
+        map: createGlowTexture(128, 'rgba(255, 180, 150, 0.2)'),
+        transparent: true,
+        opacity: 0.4,
+        blending: _three.AdditiveBlending
+    });
+    const glow = new _three.Sprite(glowMaterial);
+    glow.scale.set(6000, 3000, 1);
+    glow.position.set(3500, 2200, -13100); // Slightly behind the constellation
+    glow.userData = {
+        isConstellationGlow: true
+    };
+    group.add(glow);
+    return group;
+}
+// Helper function to create a bright star
+function createBrightStar(color = 0xffffff, size = 5) {
+    const starMaterial = new _three.SpriteMaterial({
+        map: createStarTexture(),
+        color: color,
         transparent: true,
         opacity: 1.0,
         blending: _three.AdditiveBlending
-    }));
-    // Position at the first shared point coordinates
-    testSprite.position.set(firstSharedPoint.x, firstSharedPoint.y, firstSharedPoint.z);
-    // Make it very large for visibility
-    testSprite.scale.set(500, 500, 1);
-    // Add to scene
-    scene.add(testSprite);
-    console.log('ADDED: Test sprite from first shared point at position:', firstSharedPoint.x, firstSharedPoint.y, firstSharedPoint.z);
-    // Add a helper axis at that position for reference
-    const axesHelper = new _three.AxesHelper(200);
-    axesHelper.position.copy(testSprite.position);
-    scene.add(axesHelper);
-    console.log('ADDED: Axes helper at test sprite position');
-} else console.error('ERROR: No shared points available to create test sprite!');
+    });
+    const star = new _three.Sprite(starMaterial);
+    star.scale.set(size * 30, size * 30, 1); // Make stars bigger for constellations
+    return star;
+}
+// Create a star-shaped texture for the constellation stars
+function createStarTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext('2d');
+    // Create a radial gradient for the star glow with enhanced brightness
+    const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.1, 'rgba(255, 255, 255, 1.0)'); // Increased from 0.9
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.6)'); // Increased from 0.4
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 64, 64);
+    // Add a star shape in the center
+    context.beginPath();
+    for(let i = 0; i < 5; i++){
+        const outerRadius = 24;
+        const innerRadius = 12;
+        const outerX = 32 + outerRadius * Math.cos(i * 2 * Math.PI / 5 - Math.PI / 2);
+        const outerY = 32 + outerRadius * Math.sin(i * 2 * Math.PI / 5 - Math.PI / 2);
+        const innerX = 32 + innerRadius * Math.cos((i + 0.5) * 2 * Math.PI / 5 - Math.PI / 2);
+        const innerY = 32 + innerRadius * Math.sin((i + 0.5) * 2 * Math.PI / 5 - Math.PI / 2);
+        if (i === 0) context.moveTo(outerX, outerY);
+        else context.lineTo(outerX, outerY);
+        context.lineTo(innerX, innerY);
+    }
+    context.closePath();
+    context.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    context.fill();
+    const texture = new _three.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+}
+// Create a glow texture for the constellation background
+function createGlowTexture(size = 64, color = 'rgba(255, 255, 255, 0.5)') {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+    // Create a radial gradient for the glow
+    const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, size, size);
+    const texture = new _three.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+}
+// Update constellation animations (pulsing effect)
+function updateConstellationAnimations(delta) {
+    // Find constellations in the scene
+    const goatConstellation = scene.getObjectByName('goatConstellation');
+    const buttConstellation = scene.getObjectByName('buttConstellation');
+    // Process goat constellation animation
+    if (goatConstellation && goatConstellation.userData.shouldPulse) {
+        goatConstellation.userData.lastPulseTime += delta;
+        const pulseTime = goatConstellation.userData.lastPulseTime;
+        const pulseDuration = 3.0; // Pulse for 3 seconds
+        if (pulseTime <= pulseDuration) {
+            // Calculate pulse intensity (peak at 1.5 seconds)
+            const pulseIntensity = Math.sin(pulseTime / pulseDuration * Math.PI);
+            // Apply pulse effect to stars and lines
+            goatConstellation.children.forEach((child)=>{
+                if (child.userData.isConstellationStar) {
+                    // Increase brightness and size of stars
+                    child.material.color.setRGB(1.0, 1.0, 0.8 + 0.2 * pulseIntensity // Blue varies with pulse
+                    );
+                    const baseStar = 4 + child.userData.index % 3;
+                    const pulseScale = baseStar * 30 * (1 + pulseIntensity * 0.5);
+                    child.scale.set(pulseScale, pulseScale, 1);
+                } else if (child.userData.isConstellationLine) {
+                    // Increase opacity of connecting lines
+                    child.material.opacity = 0.3 + 0.5 * pulseIntensity;
+                    child.material.color.setRGB(0.5 + 0.5 * pulseIntensity, 0.8 + 0.2 * pulseIntensity, 1.0 // Full blue
+                    );
+                } else if (child.userData.isConstellationGlow) // Increase glow opacity
+                child.material.opacity = 0.4 + 0.3 * pulseIntensity;
+            });
+        } else {
+            // Reset after pulse is complete
+            goatConstellation.userData.shouldPulse = false;
+            goatConstellation.children.forEach((child)=>{
+                if (child.userData.isConstellationStar) {
+                    child.material.color.setHex(0xccffff);
+                    const baseStar = 4 + child.userData.index % 3;
+                    child.scale.set(baseStar * 30, baseStar * 30, 1);
+                } else if (child.userData.isConstellationLine) {
+                    child.material.opacity = 0.3;
+                    child.material.color.setHex(0x88ccff);
+                } else if (child.userData.isConstellationGlow) child.material.opacity = 0.4;
+            });
+        }
+    }
+    // Process butt constellation animation
+    if (buttConstellation && buttConstellation.userData.shouldPulse) {
+        buttConstellation.userData.lastPulseTime += delta;
+        const pulseTime = buttConstellation.userData.lastPulseTime;
+        const pulseDuration = 3.0; // Pulse for 3 seconds
+        if (pulseTime <= pulseDuration) {
+            // Calculate pulse intensity (peak at 1.5 seconds)
+            const pulseIntensity = Math.sin(pulseTime / pulseDuration * Math.PI);
+            // Apply pulse effect to stars and lines
+            buttConstellation.children.forEach((child)=>{
+                if (child.userData.isConstellationStar) {
+                    // Increase brightness and size of stars
+                    child.material.color.setRGB(1.0, 0.7 + 0.3 * pulseIntensity, 0.5 + 0.3 * pulseIntensity // Blue varies with pulse
+                    );
+                    const baseStar = 4 + child.userData.index % 3;
+                    const pulseScale = baseStar * 30 * (1 + pulseIntensity * 0.5);
+                    child.scale.set(pulseScale, pulseScale, 1);
+                } else if (child.userData.isConstellationLine) {
+                    // Increase opacity of connecting lines
+                    child.material.opacity = 0.3 + 0.5 * pulseIntensity;
+                    child.material.color.setRGB(1.0, 0.6 + 0.4 * pulseIntensity, 0.5 + 0.3 * pulseIntensity // More blue during pulse
+                    );
+                } else if (child.userData.isConstellationGlow) // Increase glow opacity
+                child.material.opacity = 0.4 + 0.3 * pulseIntensity;
+            });
+        } else {
+            // Reset after pulse is complete
+            buttConstellation.userData.shouldPulse = false;
+            buttConstellation.children.forEach((child)=>{
+                if (child.userData.isConstellationStar) {
+                    child.material.color.setHex(0xffccaa);
+                    const baseStar = 4 + child.userData.index % 3;
+                    child.scale.set(baseStar * 30, baseStar * 30, 1);
+                } else if (child.userData.isConstellationLine) {
+                    child.material.opacity = 0.3;
+                    child.material.color.setHex(0xffaa88);
+                } else if (child.userData.isConstellationGlow) child.material.opacity = 0.4;
+            });
+        }
+    }
+}
+// Add starfield to the scene
+const starfield = createStarfield();
+// Initialize fireworks
+(0, _fireworksJs.initFireworks)(scene);
+// Create 3D tooltip for wallet data
+const walletTooltip = new (0, _walletTooltipJsDefault.default)(scene, camera);
+console.log('3D wallet tooltip initialized');
+// Initial camera setup - increased distance for better view of larger visualization
+camera.position.set(0, 0, 5000); // Increased from 3000 to 5000 to fit the larger visualization
+camera.lookAt(0, 0, 0);
+// Detect if device is touch-based (mobile/tablet)
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+// Console element not needed in production
+const consoleElement = document.getElementById('console');
+if (consoleElement) consoleElement.style.display = 'none';
+// Initialize appropriate controls based on device type
+let controls;
+let controlType;
+// Track shift key state for jetpack
+let shiftKeyPressed = false;
+// Add event listeners for shift key (for jetpack control) and ensure WASD keys are properly captured
+window.addEventListener('keydown', function(event1) {
+    if (event1.code === 'ShiftLeft') shiftKeyPressed = true;
+    // Make sure FlyControls receives these events for WASD movement
+    if (controlType === 'Fly' && controls) {
+        // Ensure the moveState object exists and is properly initialized
+        if (!controls.moveState) controls.moveState = {
+            up: 0,
+            down: 0,
+            left: 0,
+            right: 0,
+            forward: 0,
+            back: 0,
+            pitchUp: 0,
+            pitchDown: 0,
+            yawLeft: 0,
+            yawRight: 0,
+            rollLeft: 0,
+            rollRight: 0
+        };
+        // Update moveState directly based on key presses for WASD
+        switch(event1.code){
+            case 'KeyW':
+                controls.moveState.forward = 1;
+                break;
+            case 'KeyS':
+                controls.moveState.back = 1;
+                break;
+            case 'KeyA':
+                controls.moveState.left = 1;
+                break;
+            case 'KeyD':
+                controls.moveState.right = 1;
+                break;
+            case 'KeyR':
+                controls.moveState.up = 1;
+                break;
+            case 'KeyF':
+                controls.moveState.down = 1;
+                break;
+        }
+    }
+});
+window.addEventListener('keyup', function(event1) {
+    if (event1.code === 'ShiftLeft') shiftKeyPressed = false;
+    // Update FlyControls moveState on key release
+    if (controlType === 'Fly' && controls) switch(event1.code){
+        case 'KeyW':
+            controls.moveState.forward = 0;
+            break;
+        case 'KeyS':
+            controls.moveState.back = 0;
+            break;
+        case 'KeyA':
+            controls.moveState.left = 0;
+            break;
+        case 'KeyD':
+            controls.moveState.right = 0;
+            break;
+        case 'KeyR':
+            controls.moveState.up = 0;
+            break;
+        case 'KeyF':
+            controls.moveState.down = 0;
+            break;
+    }
+});
+try {
+    if (isTouchDevice) {
+        // Use OrbitControls for touch devices
+        controls = new (0, _orbitControlsJs.OrbitControls)(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.1;
+        controls.rotateSpeed = 0.5;
+        controls.screenSpacePanning = false;
+        controls.minDistance = 1000; // Increased from 500 to 1000 for better viewing with more points
+        controls.maxDistance = 50000; // Increased from 30000 to 50000 to match camera far clip plane
+        controlType = 'Orbit';
+        if (consoleElement) consoleElement.innerHTML += '<p>Created OrbitControls for touch device</p>';
+    } else {
+        // Use FlyControls for desktop
+        controls = new (0, _flyControlsJs.FlyControls)(camera, renderer.domElement);
+        controls.movementSpeed = 400; // Increased movement speed from 200 to 400
+        controls.rollSpeed = Math.PI / 6; // Set roll speed as specified
+        controls.dragToLook = false; // Set to false to enable direct mouse look
+        controls.autoForward = false; // Don't move forward automatically
+        controls.lookSpeed = 0.3; // Set a sensible mouse look speed
+        controlType = 'Fly'; // Set control type for event handlers
+        // Additional physics properties for desktop
+        controls.velocity = new _three.Vector3(0, 0, 0); // Current velocity vector
+        controls.damping = 0.2; // Reduced damping for smoother inertia (was 0.5)
+        controls.gravity = 0.5; // Half gravity for floating effect
+        // Jetpack fuel system
+        controls.jetpackFuel = 250; // Full tank = 250 units (2.5x the original 100)
+        controls.jetpackMaxFuel = 250; // 2.5x the original maximum
+        controls.jetpackActive = false;
+        controls.jetpackEnabled = true; // Enabled when fuel > 0
+        controls.jetpackRefillRate = 0.8; // Refill rate when not using jetpack
+        controls.jetpackDrainRate = 1.2; // Drain rate when using jetpack
+        controls.jetpackMinFuelToReactivate = 25; // Minimum fuel needed to reactivate (scaled up from 10)
+        controls.jetpackBoostFactor = 2.5; // How much faster than normal speed
+        // Show the fuel meter UI for desktop
+        const fuelBar = document.getElementById('fuel-bar');
+        if (fuelBar) {
+            fuelBar.style.display = 'block';
+            // Make sure the inner fuel level element exists and is initialized
+            const fuelLevel = document.getElementById('fuel-level');
+            if (fuelLevel) {
+                fuelLevel.style.width = '100%';
+                fuelLevel.style.backgroundColor = '#22cc22';
+                console.log('Fuel meter UI initialized for desktop controls');
+            } else console.error('Fuel level element not found in the DOM');
+        } else console.error('Fuel bar not found in the DOM');
+        controlType = 'Fly';
+        if (consoleElement) consoleElement.innerHTML += '<p>Created FlyControls for desktop</p>';
+    }
+} catch (error) {
+    console.error('Error creating controls:', error);
+    if (consoleElement) consoleElement.innerHTML += `<p style="color:red">Error creating controls: ${error.message}</p>`;
+}
+// Set the target/lookAt point for OrbitControls
+if (controlType === 'Orbit') controls.target.set(0, 0, 0);
+// Initial update
+if (controlType === 'Fly') {
+    const delta = 0.01; // Small initial delta for first update
+    controls.update(delta);
+} else controls.update();
+// Initialize and prepare visualization data
+(0, _dataLoaderJs.initializeData)();
+(0, _positionMapperJs.generateAllPoints)();
+// Make sure our tooltip fix is applied when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded - ensuring tooltip is ready');
+    tooltip = (0, _directTooltipFixJs.createTooltipIfMissing)();
+    console.log('Tooltip ready status:', tooltip !== null);
+});
+// Data verification - check that wallet data was loaded successfully
+if ((0, _positionMapperJs.sharedPoints).length === 0 || (0, _positionMapperJs.fartcoinPoints).length === 0 || (0, _positionMapperJs.goatTokenPoints).length === 0) console.error('ERROR: Missing wallet data for visualization!');
+const createLevel2Cluster = (parentPosition, parentScale, parentColor, parentWalletData)=>{
+    const sphericalShellGroup = new _three.Group();
+    const centralNodeMaterial = new _three.SpriteMaterial({
+        map: pointTexture,
+        color: parentColor,
+        transparent: true,
+        opacity: 0.9,
+        blending: _three.AdditiveBlending
+    });
+    const centralNode = new _three.Sprite(centralNodeMaterial);
+    centralNode.scale.set(parentScale * 0.5, parentScale * 0.5, 1);
+    centralNode.position.set(0, 0, 0);
+    centralNode.userData = {
+        isLevel1Wallet: true,
+        walletData: parentWalletData
+    };
+    sphericalShellGroup.add(centralNode);
+    // 🔥 LOWERED POINT COUNT TO REDUCE CPU LOAD
+    const numPoints = 20;
+    const shellRadius = parentScale * 2.8;
+    for(let i = 0; i < numPoints; i++){
+        const phi = Math.acos(1 - 2 * (i + 0.5) / numPoints);
+        const theta = Math.PI * 2 * i * (1 + Math.sqrt(5));
+        const x = shellRadius * Math.sin(phi) * Math.cos(theta);
+        const z = shellRadius * Math.sin(phi) * Math.sin(theta);
+        const yPos = shellRadius * Math.cos(phi);
+        const walletNodeMaterial = new _three.SpriteMaterial({
+            map: pointTexture,
+            color: new _three.Color(parentColor).lerp(new _three.Color(0xffffff), 0.3),
+            transparent: true,
+            opacity: 0.7,
+            blending: _three.AdditiveBlending
+        });
+        const walletNode = new _three.Sprite(walletNodeMaterial);
+        const walletScale = parentScale * 0.18;
+        walletNode.scale.set(walletScale, walletScale, 1);
+        walletNode.position.set(x, yPos, z);
+        sphericalShellGroup.add(walletNode);
+        walletNode.userData = {
+            originalPosition: new _three.Vector3(x, yPos, z),
+            shellRadius: shellRadius,
+            originalScale: walletScale,
+            originalColor: walletNodeMaterial.color.getStyle(),
+            isLevel1Wallet: false,
+            walletData: parentWalletData
+        };
+    }
+    sphericalShellGroup.position.copy(parentPosition);
+    return sphericalShellGroup;
+};
+// Function to create a wallet point cloud with sprites
+function createWalletPointCloud(pointsArray, groupName, color = 0xffffff) {
+    // Create a group to hold all sprites
+    const group = new _three.Group();
+    group.name = groupName;
+    // Check if we have valid points
+    if (!pointsArray || pointsArray.length === 0) {
+        console.error(`No points available for ${groupName}`);
+        return group;
+    }
+    // Level 2 clusters container (for performance management)
+    const level2Group = new _three.Group();
+    level2Group.name = `${groupName}_level2`;
+    // Create a sprite for each point
+    pointsArray.forEach((point, index)=>{
+        if (isNaN(point.x) || isNaN(point.y) || isNaN(point.z)) {
+            console.warn(`Skipping invalid point at index ${index}`);
+            return; // Skip invalid points
+        }
+        // Enhanced material with glow effect
+        const material = new _three.SpriteMaterial({
+            map: pointTexture,
+            color: point.color || color,
+            transparent: true,
+            opacity: 0.9,
+            blending: _three.AdditiveBlending
+        });
+        const sprite = new _three.Sprite(material);
+        // Position the sprite
+        sprite.position.set(point.x, point.y, point.z);
+        // Calculate scale based on amount, with minimum scale to ensure visibility
+        const baseScale = point.totalHolding ? Math.log(point.totalHolding) * 10 : 200;
+        const scale = Math.max(200, baseScale * 3);
+        sprite.scale.set(scale, scale, 1);
+        // Store wallet data in userData for raycasting and hover effects
+        sprite.userData = {
+            isLevel1Wallet: true,
+            parentIndex: index,
+            walletData: {
+                address: point.address,
+                fartAmount: point.fartAmount || 0,
+                goatAmount: point.goatAmount || 0,
+                totalHolding: point.totalHolding || 0,
+                walletType: point.walletType || 'unknown'
+            },
+            originalScale: scale,
+            originalColor: point.color
+        };
+        // Add to group
+        group.add(sprite);
+        // Add Level 2 clusters for each Level 1 wallet
+        // Now supporting all parent nodes to handle the full dataset
+        // For Fartcoin and Goat, we need to handle 1000+ points each, plus 76 shared
+        const level2Cluster = createLevel2Cluster(sprite.position.clone(), scale, point.color || color, point.walletData || {
+            address: point.address,
+            fartAmount: point.fartAmount || 0,
+            goatAmount: point.goatAmount || 0
+        });
+        // Store reference to parent for orbit animation
+        level2Cluster.userData = {
+            parentIndex: index,
+            shellRadius: scale * 2.8,
+            rotationSpeed: 0.05 + Math.random() * 0.10,
+            parentSprite: sprite,
+            rotationAxis: new _three.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+            walletData: sprite.userData.walletData // Copy wallet data from parent
+        };
+        level2Group.add(level2Cluster);
+    });
+    // Add the main group to the scene
+    scene.add(group);
+    // Add the Level 2 clusters group to the scene
+    scene.add(level2Group);
+    return {
+        mainGroup: group,
+        level2Group: level2Group
+    };
+}
+// Create all wallet point clouds
+if ((0, _positionMapperJs.sharedPoints).length > 0 && (0, _positionMapperJs.fartcoinPoints).length > 0 && (0, _positionMapperJs.goatTokenPoints).length > 0) {
+    // Create point clouds for each dataset with Level 2 recursion
+    const sharedGroups = createWalletPointCloud((0, _positionMapperJs.sharedPoints), 'sharedWallets', 0xffffff);
+    const fartcoinGroups = createWalletPointCloud((0, _positionMapperJs.fartcoinPoints), 'fartcoinWallets', 0x00ff00);
+    const goatTokenGroups = createWalletPointCloud((0, _positionMapperJs.goatTokenPoints), 'goatTokenWallets', 0x0000ff);
+    // Extract main groups for bounding box calculation
+    const sharedGroup = sharedGroups.mainGroup;
+    const fartcoinGroup = fartcoinGroups.mainGroup;
+    const goatTokenGroup = goatTokenGroups.mainGroup;
+    // Store Level 2 groups for animation updates
+    const level2Groups1 = [
+        sharedGroups.level2Group,
+        fartcoinGroups.level2Group,
+        goatTokenGroups.level2Group
+    ];
+    // Calculate bounding box for camera positioning
+    const boundingBox = new _three.Box3();
+    // Initialize with empty but valid volume
+    boundingBox.set(new _three.Vector3(-1, -1, -1), new _three.Vector3(1, 1, 1));
+    // Function to safely add sprites to bounding box
+    const addGroupToBoundingBox = (group)=>{
+        if (group && group.children && group.children.length > 0) group.children.forEach((sprite)=>{
+            if (sprite && sprite.position) boundingBox.expandByPoint(sprite.position);
+        });
+    };
+    // Add all wallet groups to the bounding box (only main Level 1 groups)
+    addGroupToBoundingBox(sharedGroup);
+    addGroupToBoundingBox(fartcoinGroup);
+    addGroupToBoundingBox(goatTokenGroup);
+    // Get bounding box center and size
+    boxCenter = boundingBox.getCenter(new _three.Vector3());
+    const boxSize = boundingBox.getSize(new _three.Vector3());
+    // Ensure minimum dimensions
+    const maxDim = Math.max(Math.max(1, boxSize.x), Math.max(1, boxSize.y), Math.max(1, boxSize.z));
+    // Calculate camera distance - increased to accommodate 200 points per node
+    const cameraDistance = Math.max(5000, maxDim * 3.0);
+    // Position the camera to fit the bounding box
+    camera.position.set(boxCenter.x, boxCenter.y + maxDim * 0.5, boxCenter.z + cameraDistance);
+    // Look at the center of the wallet cloud
+    camera.lookAt(boxCenter);
+    // Update controls target for OrbitControls
+    if (controlType === 'Orbit') {
+        controls.target.copy(boxCenter);
+        controls.update();
+    } else if (controlType === 'Fly') {
+        // For FlyControls, just make sure camera is looking at the target
+        camera.lookAt(boxCenter);
+        controls.update(0.01);
+    }
+// Debug test spheres removed for production
+} else console.error('Error: Missing wallet data for visualization.');
+// Update controls instructions based on detected control type
+const controlsElement = document.getElementById('controls');
+if (controlsElement) {
+    if (controlType === 'Fly') controlsElement.innerHTML = 'WASD to move, drag mouse to look around<br>HOLD LEFT SHIFT to activate jetpack boost';
+    else controlsElement.innerHTML = 'Drag to rotate, pinch to zoom';
+}
 // Handle window resize
 window.addEventListener('resize', ()=>{
+    // Update camera aspect
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    // Reset any active hover state on resize
+    if (hoveredObject) {
+        // Restore original scale
+        hoveredObject.scale.set(hoveredObject.userData.originalScale, hoveredObject.userData.originalScale, 1);
+        // Restore original color
+        if (hoveredObject.material) hoveredObject.material.color.set(hoveredObject.userData.originalColor);
+        hoveredObject = null;
+        // Hide tooltip using our direct fix
+        if (tooltip) {
+            (0, _directTooltipFixJs.hideTooltip)(tooltip);
+            console.log('HTML tooltip hidden with direct fix');
+        }
+    }
+    // Check if device type changed (e.g., orientation change might affect detection)
+    const currentIsTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+    const expectedControlType = currentIsTouchDevice ? 'Orbit' : 'Fly';
+    // If control type doesn't match the current device type, reload to reinitialize
+    if (controlType !== expectedControlType) location.reload();
 });
 // Render loop
 const clock = new _three.Clock();
+clock.start(); // Explicitly start the clock
+let frameCounter = 0;
+const logInterval = 60;
+// Store initial camera position and target for recovery
+const initialCameraPosition = camera.position.clone();
+const initialCameraTarget = boxCenter.clone();
 function animate() {
     requestAnimationFrame(animate);
-    // Update controls based on time delta for smooth movement
     const delta = clock.getDelta();
-    controls.update(delta);
+    // Animate constellation pulsing
+    updateConstellationAnimations(delta);
+    // Update 3D tooltip position
+    walletTooltip.update();
+    // Handle hover animation for better visibility
+    if (hoveredObject && hoveredObject.userData.pulseAnimation) {
+        hoveredObject.userData.pulseTime += delta;
+        // More extreme pulsing - 5x to 8x original size
+        const pulseScale = hoveredObject.userData.originalScale * (5 + Math.sin(hoveredObject.userData.pulseTime * 8) * 3);
+        hoveredObject.scale.set(pulseScale, pulseScale, 1);
+        // Also pulse the brightness with more extreme values and different color
+        if (hoveredObject.material) {
+            // Use bright yellow/white for maximum visibility
+            const pulseIntensity = 1.5 + Math.sin(hoveredObject.userData.pulseTime * 8) * 0.5;
+            hoveredObject.material.color.setRGB(1.0, 1.0, Math.min(1, 0.7 + Math.sin(hoveredObject.userData.pulseTime * 16) * 0.3) // Pulsing blue
+            );
+        }
+    }
+    // Update controls based on control type
+    if (controlType === 'Fly') {
+        // Custom physics for FlyControls on desktop
+        // Get keyboard state
+        const moveForward = controls.moveState.forward > 0;
+        // Use ShiftLeft instead of spacebar (which was mapped to moveState.up)
+        const jetpackKeyPressed = shiftKeyPressed;
+        // Update jetpack fuel
+        const fuelLevelElement = document.getElementById('fuel-level');
+        // Handle jetpack fuel logic - Fixed functionality
+        if (controlType === 'Fly' && jetpackKeyPressed && controls.jetpackEnabled && controls.jetpackFuel > 0) {
+            // Only activate jetpack when Left Shift is held AND we have fuel
+            if (!controls.jetpackActive) console.log('Jetpack activated!');
+            controls.jetpackActive = true;
+            // Drain fuel at the correct rate
+            const previousFuel = controls.jetpackFuel;
+            controls.jetpackFuel = Math.max(0, controls.jetpackFuel - controls.jetpackDrainRate * delta * 60);
+            // Log jetpack activation
+            if (frameCounter % logInterval === 0) console.log(`Jetpack active: ${controls.jetpackActive}, Fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Drain rate: ${controls.jetpackDrainRate}`);
+            // Disable jetpack if fuel depleted
+            if (controls.jetpackFuel <= 0) {
+                controls.jetpackEnabled = false;
+                controls.jetpackActive = false;
+                console.log('Jetpack disabled: Out of fuel');
+            }
+        } else {
+            // Deactivate jetpack when Left Shift is released
+            if (controls.jetpackActive) console.log('Jetpack deactivated');
+            controls.jetpackActive = false;
+            // Recharge fuel when not using jetpack
+            if (controlType === 'Fly' && controls.jetpackFuel < controls.jetpackMaxFuel) {
+                const previousFuel = controls.jetpackFuel;
+                controls.jetpackFuel = Math.min(controls.jetpackMaxFuel, controls.jetpackFuel + controls.jetpackRefillRate * delta * 60);
+                // Log fuel recharge
+                if (frameCounter % logInterval === 0) console.log(`Recharging fuel: ${controls.jetpackFuel.toFixed(1)}/${controls.jetpackMaxFuel}, Refill rate: ${controls.jetpackRefillRate}`);
+                // Re-enable jetpack if fuel reaches minimum threshold
+                if (!controls.jetpackEnabled && controls.jetpackFuel >= controls.jetpackMinFuelToReactivate) {
+                    controls.jetpackEnabled = true;
+                    console.log('Jetpack re-enabled: Sufficient fuel');
+                }
+            }
+        }
+        // Update fuel meter UI
+        if (fuelLevelElement) {
+            const fuelPercentage = controls.jetpackFuel / controls.jetpackMaxFuel * 100;
+            // Ensure the fuel bar is visible with high z-index
+            const fuelBar = document.getElementById('fuel-bar');
+            if (fuelBar) {
+                fuelBar.style.display = 'block';
+                fuelBar.style.zIndex = '1000'; // Ensure it's above other elements
+                fuelBar.style.opacity = '1'; // Make fully visible
+            }
+            // Update the width of the fuel level
+            fuelLevelElement.style.width = `${fuelPercentage}%`;
+            // Change color based on fuel level with more vibrant colors
+            if (fuelPercentage < 20) fuelLevelElement.style.backgroundColor = '#ff3333'; // Bright red when low
+            else if (fuelPercentage < 50) fuelLevelElement.style.backgroundColor = '#ffcc00'; // Bright yellow when medium
+            else fuelLevelElement.style.backgroundColor = '#33ff33'; // Bright green when high
+            // Add a strong glow effect when jetpack is active
+            if (controls.jetpackActive) {
+                fuelLevelElement.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.9)';
+                // Pulse effect for active jetpack
+                const pulseValue = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+                fuelLevelElement.style.opacity = pulseValue.toString();
+            } else {
+                fuelLevelElement.style.boxShadow = '0 0 5px rgba(255, 255, 255, 0.5)';
+                fuelLevelElement.style.opacity = '1';
+            }
+            // Log fuel bar updates
+            if (frameCounter % logInterval === 0) console.log(`Updated fuel bar: width=${fuelPercentage.toFixed(1)}%, active=${controls.jetpackActive}`);
+        } else console.warn('Fuel level element not found in the DOM');
+        // Get the camera's forward direction
+        const forwardVector = new _three.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        // Calculate movement from FlyControls' internal state
+        let movement = new _three.Vector3();
+        // Apply standard FlyControls update for basic movement only if not stopped
+        if (!stopRotating) controls.update(delta);
+        // Handle jetpack mechanics with shift key
+        if (controls.jetpackActive && controls.jetpackEnabled) {
+            // Get the camera's forward direction for jetpack thrust
+            const jetpackThrustVector = forwardVector.clone();
+            // Apply strong forward thrust in the camera's direction when jetpack is active
+            // Multiply by the boost factor to make it significantly faster
+            const jetpackSpeed = controls.movementSpeed * controls.jetpackBoostFactor;
+            // Add a strong forward boost to camera position directly
+            camera.position.add(jetpackThrustVector.multiplyScalar(jetpackSpeed * delta * 2));
+            // Add a stronger upward boost for better flying feel
+            const upVector = new _three.Vector3(0, 1, 0);
+            camera.position.add(upVector.multiplyScalar(controls.movementSpeed * delta));
+            // Visual feedback for jetpack activation
+            if (frameCounter % logInterval === 0) console.log(`Jetpack boost applied: speed=${jetpackSpeed}, fuel=${controls.jetpackFuel.toFixed(1)}`);
+            // Debug logging for jetpack thrust
+            if (frameCounter % logInterval === 0) console.log(`Applying jetpack thrust: speed=${jetpackSpeed}, direction=(${jetpackThrustVector.x.toFixed(2)}, ${jetpackThrustVector.y.toFixed(2)}, ${jetpackThrustVector.z.toFixed(2)})`);
+        }
+        // Apply momentum and damping for zero-gravity drift
+        // Only apply normal WASD movement if jetpack is not active
+        if (!controls.jetpackActive && (controls.moveState.forward || controls.moveState.back || controls.moveState.left || controls.moveState.right || controls.moveState.up || controls.moveState.down)) {
+            // If keys are pressed and jetpack is not active, add their effect to velocity
+            if (controls.moveState.forward) movement.add(forwardVector.clone().multiplyScalar(controls.movementSpeed * delta));
+            if (controls.moveState.back) movement.add(forwardVector.clone().multiplyScalar(-controls.movementSpeed * delta));
+            // Right vector
+            const rightVector = new _three.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+            if (controls.moveState.right) movement.add(rightVector.clone().multiplyScalar(controls.movementSpeed * delta));
+            if (controls.moveState.left) movement.add(rightVector.clone().multiplyScalar(-controls.movementSpeed * delta));
+            // Up/down movement (using R/F keys)
+            const upVector = new _three.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+            // Process normal up/down movement (R/F keys)
+            if (controls.moveState.up) movement.add(upVector.clone().multiplyScalar(controls.movementSpeed * delta));
+            if (controls.moveState.down) movement.add(upVector.clone().multiplyScalar(-controls.movementSpeed * delta));
+        }
+        // Always add the current movement to velocity, whether from jetpack or WASD
+        controls.velocity.add(movement);
+        // Apply light inertia - gradual slowdown when jetpack turns off
+        // Lower damping means more inertia (slower slowdown)
+        controls.velocity.multiplyScalar(1 - controls.damping * delta);
+        // Apply half-gravity pullback - slowly pull down in world-space Y axis
+        // This simulates a floating feel in low-gravity
+        if (!controls.moveState.up && !controls.moveState.down) // Only apply gravity when not explicitly moving up/down
+        controls.velocity.y -= controls.gravity * delta;
+        // Apply velocity to camera position for actual movement
+        camera.position.add(controls.velocity.clone().multiplyScalar(delta));
+        // Log physics state for debugging
+        if (frameCounter % logInterval === 0) console.log(`Physics: velocity=(${controls.velocity.x.toFixed(2)}, ${controls.velocity.y.toFixed(2)}, ${controls.velocity.z.toFixed(2)}), damping=${controls.damping}, gravity=${controls.gravity}`);
+    } else // OrbitControls just needs regular update
+    controls.update();
+    // Subtle starfield rotation
+    if (starfield) {
+        starfield.rotation.y += delta * 0.01;
+        starfield.rotation.x += delta * 0.005;
+    }
+    // Update Level 2 cluster orbits
+    if (typeof level2Groups !== 'undefined') level2Groups.forEach((group)=>{
+        if (group && group.children) group.children.forEach((cluster)=>{
+            if (cluster && cluster.userData) {
+                // Get parent reference and orbit data
+                const parentSprite = cluster.userData.parentSprite;
+                if (parentSprite) {
+                    // For hollow spherical shells, we maintain the sphere structure
+                    // and rotate the entire sphere around its center (the parent node)
+                    // Get parent position and rotation data
+                    const parentPos = parentSprite.position;
+                    // Apply rotation to the entire spherical shell group
+                    // This maintains the hollow sphere structure while animating
+                    // Create rotation quaternion based on time and random axis
+                    const rotationSpeed = cluster.userData.rotationSpeed;
+                    const rotationAxis = cluster.userData.rotationAxis;
+                    // Apply incremental rotation to the entire group
+                    cluster.rotateOnAxis(rotationAxis, delta * rotationSpeed);
+                    // Update the center position to follow the parent node
+                    cluster.position.set(parentPos.x, parentPos.y, parentPos.z);
+                    // No need to update individual wallet positions as they are fixed
+                    // relative to the sphere center and rotate with the whole group
+                    // Add slight rotation to the entire cluster
+                    cluster.rotation.z += delta * 0.1;
+                }
+            }
+        });
+    });
+    // Check for invalid camera position (but without excessive logging)
+    frameCounter++;
+    if (frameCounter % logInterval === 0) {
+        // Check for invalid camera position
+        if (isNaN(camera.position.x) || isNaN(camera.position.y) || isNaN(camera.position.z)) {
+            camera.position.copy(initialCameraPosition);
+            if (controlType === 'Orbit') controls.target.copy(initialCameraTarget);
+            else camera.lookAt(initialCameraTarget);
+            if (controlType === 'Fly') controls.update(delta);
+            else controls.update();
+        }
+        if (frameCounter > 1000) frameCounter = 0;
+    }
+    // Perform raycasting for hover detection
+    raycaster.setFromCamera(mouse, camera);
+    // Debug: Log raycaster status every few frames
+    if (frameCounter % 120 === 0) {
+        console.log(`Raycaster origin: (${raycaster.ray.origin.x.toFixed(2)}, ${raycaster.ray.origin.y.toFixed(2)}, ${raycaster.ray.origin.z.toFixed(2)})`);
+        console.log(`Raycaster direction: (${raycaster.ray.direction.x.toFixed(2)}, ${raycaster.ray.direction.y.toFixed(2)}, ${raycaster.ray.direction.z.toFixed(2)})`);
+    }
+    // Create array of all point clouds to raycast against
+    const pointGroups = [];
+    // Add all wallet groups to raycasting targets
+    const sharedGroup = scene.getObjectByName('sharedWallets');
+    const fartcoinGroup = scene.getObjectByName('fartcoinWallets');
+    const goatTokenGroup = scene.getObjectByName('goatTokenWallets');
+    // Debug: Log group existence
+    if (frameCounter % 120 === 0) console.log(`Wallet groups found: shared=${!!sharedGroup}, fartcoin=${!!fartcoinGroup}, goat=${!!goatTokenGroup}`);
+    if (sharedGroup) pointGroups.push(sharedGroup);
+    if (fartcoinGroup) pointGroups.push(fartcoinGroup);
+    if (goatTokenGroup) pointGroups.push(goatTokenGroup);
+    // Get wallet points to test against
+    let allWalletPoints = [];
+    pointGroups.forEach((group)=>{
+        if (group && group.children) allWalletPoints = allWalletPoints.concat(group.children);
+    });
+    // DEBUG v30: Include ALL wallet points in hover detection, regardless of type
+    // Previously we were filtering out Level 1 wallet nodes, but that might be part of the hover issue
+    let filteredWalletPoints = allWalletPoints;
+    // Keep track of how many points would have been filtered out for debugging
+    let levelOneWallets = allWalletPoints.filter((point)=>point.userData?.isLevel1Wallet);
+    let smallWalletPoints = allWalletPoints.filter((point)=>!point.userData?.isLevel1Wallet);
+    // Debug: Log wallet points count with more details
+    if (frameCounter % 120 === 0) {
+        console.log(`DEBUG v30: Raycast targets: All ${allWalletPoints.length} wallet points (${levelOneWallets.length} Level 1 wallets, ${smallWalletPoints.length} small wallet points)`);
+        console.log(`DEBUG v30: Previously would have included only ${smallWalletPoints.length} points`);
+    }
+    // Get camera distance to scene center for distance check
+    const cameraDistanceToCenter = camera.position.length();
+    const maxInteractionDistance = 50000; // Increased from 10000 to 50000 to allow hover from farther away
+    // Perform raycast - temporarily remove distance restriction to debug hover issues
+    let intersects = [];
+    // DEBUG v30: Removed distance check to ensure hover works regardless of camera position
+    intersects = raycaster.intersectObjects(filteredWalletPoints, false);
+    // Debug log distance and if distance would have blocked hover
+    if (frameCounter % 60 === 0) console.log(`DEBUG v30: Camera distance: ${cameraDistanceToCenter.toFixed(2)}, would hover be disabled? ${cameraDistanceToCenter > maxInteractionDistance}`);
+    // DEBUG v30: Enhanced logging for hover debugging
+    if (frameCounter % 60 === 0) {
+        console.log(`Camera distance to center: ${cameraDistanceToCenter.toFixed(2)}, max interaction: ${maxInteractionDistance}`);
+        console.log(`Hover enabled: Always enabled for debugging in v30 (would be ${cameraDistanceToCenter <= maxInteractionDistance} with distance check)`);
+        if (intersects.length > 0) {
+            console.log(`DEBUG v30: Found ${intersects.length} intersections with wallet points`);
+            // Log details of the first 3 intersections
+            for(let i = 0; i < Math.min(3, intersects.length); i++){
+                const obj = intersects[i].object;
+                console.log(`DEBUG v30: Intersection ${i + 1}: distance=${intersects[i].distance.toFixed(2)}, ` + `type=${obj.userData?.isLevel1Wallet ? 'Level 1 Wallet' : 'Small Wallet Point'}, ` + `has wallet data: ${!!obj.userData?.walletData}, ` + `material: ${!!obj.material}, ` + `visible: ${!!obj.visible}`);
+            }
+        } else {
+            console.log(`DEBUG v30: NO INTERSECTIONS FOUND with ${filteredWalletPoints.length} wallet points`);
+            console.log(`DEBUG v30: Raycaster params:`, raycaster.params);
+        }
+    }
+    // Handle tooltip and hover effects
+    if (intersects.length > 0) {
+        const object = intersects[0].object;
+        // Only process if the object has wallet data
+        if (object.userData && object.userData.walletData) {
+            // Debug: Log wallet data found
+            if (frameCounter % 30 === 0) console.log('Found wallet data in intersection:', object.userData.walletData);
+            // If hovering over a new object
+            if (hoveredObject !== object) {
+                console.log('Hovering over new wallet:', object.userData.walletData.address);
+                // Reset previous hover state
+                if (hoveredObject) {
+                    console.log('Resetting previous hover state');
+                    // Restore original scale and color
+                    hoveredObject.scale.set(hoveredObject.userData.originalScale, hoveredObject.userData.originalScale, 1);
+                    // Restore original color
+                    if (hoveredObject.material) {
+                        console.log(`Restoring original color: ${hoveredObject.userData.originalColor}`);
+                        hoveredObject.material.color.set(hoveredObject.userData.originalColor);
+                    } else console.warn('Previous hovered object has no material');
+                }
+                // Set new hovered object
+                hoveredObject = object;
+                console.log('Set new hovered object');
+                // Scale up and brighten the hovered object - make it MUCH larger for visibility
+                const newScale = object.userData.originalScale * 3; // Increased from 1.5 to 3 for better visibility
+                console.log(`Scaling up to: ${newScale} (original: ${object.userData.originalScale})`);
+                object.scale.set(newScale, newScale, 1);
+                // Add pulsing animation for extra visibility
+                object.userData.pulseAnimation = true;
+                object.userData.pulseTime = 0;
+                // Brighten the color
+                if (object.material) {
+                    console.log('Brightening the color of hovered object');
+                    // Store original color if not already stored
+                    if (!object.userData.storedOriginalColor) {
+                        object.userData.storedOriginalColor = object.material.color.clone();
+                        console.log('Stored original color');
+                    }
+                    // Create brighter version of the original color
+                    const origColor = new _three.Color(object.userData.originalColor);
+                    console.log(`Original color: r=${origColor.r.toFixed(2)}, g=${origColor.g.toFixed(2)}, b=${origColor.b.toFixed(2)}`);
+                    const brighterColor = new _three.Color(Math.min(1, origColor.r * hoverBrightnessFactor), Math.min(1, origColor.g * hoverBrightnessFactor), Math.min(1, origColor.b * hoverBrightnessFactor));
+                    console.log(`Brighter color: r=${brighterColor.r.toFixed(2)}, g=${brighterColor.g.toFixed(2)}, b=${brighterColor.b.toFixed(2)}`);
+                    // Apply brighter color
+                    object.material.color.copy(brighterColor);
+                    console.log('Applied brighter color');
+                } else console.warn('Hovered object has no material');
+                // Show both the HTML tooltip and 3D tooltip for redundancy
+                console.log('Showing wallet tooltips (HTML and 3D)');
+                const walletData = object.userData.walletData;
+                // Log the data for debugging
+                console.log(`Wallet Data: Address=${walletData.address}, Fart=${walletData.fartAmount}, Goat=${walletData.goatAmount}`);
+                // Show HTML tooltip with our direct fix
+                if (tooltip) {
+                    // Get mouse position from event
+                    const mouseX = event?.clientX || (mouse.x + 1) * window.innerWidth / 2;
+                    const mouseY = event?.clientY || (1 - mouse.y) * window.innerHeight / 2;
+                    // Show the HTML tooltip
+                    (0, _directTooltipFixJs.showTooltip)(tooltip, mouseX, mouseY, walletData);
+                    console.log('HTML tooltip shown with direct fix');
+                } else {
+                    console.error('HTML tooltip element still missing, trying to recreate');
+                    tooltip = (0, _directTooltipFixJs.createTooltipIfMissing)();
+                }
+                // Also show 3D tooltip with wallet data as backup
+                walletTooltip.show(walletData, object.position.clone());
+            }
+        }
+    } else if (hoveredObject) {
+        // No longer hovering over anything, reset state
+        console.log('No longer hovering over anything, resetting state');
+        // Restore original scale
+        hoveredObject.scale.set(hoveredObject.userData.originalScale, hoveredObject.userData.originalScale, 1);
+        // Restore original color
+        if (hoveredObject.material) {
+            console.log(`Restoring original color on hover end: ${hoveredObject.userData.originalColor}`);
+            hoveredObject.material.color.set(hoveredObject.userData.originalColor);
+        } else console.warn('Hovered object has no material when trying to restore color');
+        // Clear hovered object
+        hoveredObject = null;
+        console.log('Cleared hovered object reference');
+        // Hide both tooltips
+        console.log('Hiding both tooltips');
+        walletTooltip.hide();
+        // Also hide HTML tooltip with our direct fix
+        if (tooltip) {
+            (0, _directTooltipFixJs.hideTooltip)(tooltip);
+            console.log('HTML tooltip hidden on hover end');
+        }
+    }
+    // Update fireworks
+    (0, _fireworksJs.updateFireworks)(scene, delta);
+    // Render the scene
     renderer.render(scene, camera);
 }
 animate();
 
-},{"three":"dsoTF","three/examples/jsm/controls/FlyControls.js":"2JKNf","./dataLoader.js":"hzZur","./positionMapper.js":"e22h2"}],"dsoTF":[function(require,module,exports,__globalThis) {
+},{"three":"dsoTF","three/examples/jsm/controls/OrbitControls.js":"45ipX","three/examples/jsm/controls/FlyControls.js":"2JKNf","./dataLoader.js":"hzZur","./positionMapper.js":"e22h2","./tooltipFix.js":"5n8hE","./walletTooltip.js":"j2vfp","./directTooltipFix.js":"888Yo","./fireworks.js":"3O8vy","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"dsoTF":[function(require,module,exports,__globalThis) {
 /**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -30205,7 +31583,702 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"2JKNf":[function(require,module,exports,__globalThis) {
+},{}],"45ipX":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "OrbitControls", ()=>OrbitControls);
+parcelHelpers.export(exports, "MapControls", ()=>MapControls);
+var _three = require("three");
+// This set of controls performs orbiting, dollying (zooming), and panning.
+// Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
+//
+//    Orbit - left mouse / touch: one-finger move
+//    Zoom - middle mouse, or mousewheel / touch: two-finger spread or squish
+//    Pan - right mouse, or left mouse + ctrl/meta/shiftKey, or arrow keys / touch: two-finger move
+const _changeEvent = {
+    type: 'change'
+};
+const _startEvent = {
+    type: 'start'
+};
+const _endEvent = {
+    type: 'end'
+};
+class OrbitControls extends (0, _three.EventDispatcher) {
+    constructor(object, domElement){
+        super();
+        this.object = object;
+        this.domElement = domElement;
+        this.domElement.style.touchAction = 'none'; // disable touch scroll
+        // Set to false to disable this control
+        this.enabled = true;
+        // "target" sets the location of focus, where the object orbits around
+        this.target = new (0, _three.Vector3)();
+        // How far you can dolly in and out ( PerspectiveCamera only )
+        this.minDistance = 0;
+        this.maxDistance = Infinity;
+        // How far you can zoom in and out ( OrthographicCamera only )
+        this.minZoom = 0;
+        this.maxZoom = Infinity;
+        // How far you can orbit vertically, upper and lower limits.
+        // Range is 0 to Math.PI radians.
+        this.minPolarAngle = 0; // radians
+        this.maxPolarAngle = Math.PI; // radians
+        // How far you can orbit horizontally, upper and lower limits.
+        // If set, the interval [ min, max ] must be a sub-interval of [ - 2 PI, 2 PI ], with ( max - min < 2 PI )
+        this.minAzimuthAngle = -Infinity; // radians
+        this.maxAzimuthAngle = Infinity; // radians
+        // Set to true to enable damping (inertia)
+        // If damping is enabled, you must call controls.update() in your animation loop
+        this.enableDamping = false;
+        this.dampingFactor = 0.05;
+        // This option actually enables dollying in and out; left as "zoom" for backwards compatibility.
+        // Set to false to disable zooming
+        this.enableZoom = true;
+        this.zoomSpeed = 1.0;
+        // Set to false to disable rotating
+        this.enableRotate = true;
+        this.rotateSpeed = 1.0;
+        // Set to false to disable panning
+        this.enablePan = true;
+        this.panSpeed = 1.0;
+        this.screenSpacePanning = true; // if false, pan orthogonal to world-space direction camera.up
+        this.keyPanSpeed = 7.0; // pixels moved per arrow key push
+        // Set to true to automatically rotate around the target
+        // If auto-rotate is enabled, you must call controls.update() in your animation loop
+        this.autoRotate = false;
+        this.autoRotateSpeed = 2.0; // 30 seconds per orbit when fps is 60
+        // The four arrow keys
+        this.keys = {
+            LEFT: 'ArrowLeft',
+            UP: 'ArrowUp',
+            RIGHT: 'ArrowRight',
+            BOTTOM: 'ArrowDown'
+        };
+        // Mouse buttons
+        this.mouseButtons = {
+            LEFT: (0, _three.MOUSE).ROTATE,
+            MIDDLE: (0, _three.MOUSE).DOLLY,
+            RIGHT: (0, _three.MOUSE).PAN
+        };
+        // Touch fingers
+        this.touches = {
+            ONE: (0, _three.TOUCH).ROTATE,
+            TWO: (0, _three.TOUCH).DOLLY_PAN
+        };
+        // for reset
+        this.target0 = this.target.clone();
+        this.position0 = this.object.position.clone();
+        this.zoom0 = this.object.zoom;
+        // the target DOM element for key events
+        this._domElementKeyEvents = null;
+        //
+        // public methods
+        //
+        this.getPolarAngle = function() {
+            return spherical.phi;
+        };
+        this.getAzimuthalAngle = function() {
+            return spherical.theta;
+        };
+        this.getDistance = function() {
+            return this.object.position.distanceTo(this.target);
+        };
+        this.listenToKeyEvents = function(domElement) {
+            domElement.addEventListener('keydown', onKeyDown);
+            this._domElementKeyEvents = domElement;
+        };
+        this.stopListenToKeyEvents = function() {
+            this._domElementKeyEvents.removeEventListener('keydown', onKeyDown);
+            this._domElementKeyEvents = null;
+        };
+        this.saveState = function() {
+            scope.target0.copy(scope.target);
+            scope.position0.copy(scope.object.position);
+            scope.zoom0 = scope.object.zoom;
+        };
+        this.reset = function() {
+            scope.target.copy(scope.target0);
+            scope.object.position.copy(scope.position0);
+            scope.object.zoom = scope.zoom0;
+            scope.object.updateProjectionMatrix();
+            scope.dispatchEvent(_changeEvent);
+            scope.update();
+            state = STATE.NONE;
+        };
+        // this method is exposed, but perhaps it would be better if we can make it private...
+        this.update = function() {
+            const offset = new (0, _three.Vector3)();
+            // so camera.up is the orbit axis
+            const quat = new (0, _three.Quaternion)().setFromUnitVectors(object.up, new (0, _three.Vector3)(0, 1, 0));
+            const quatInverse = quat.clone().invert();
+            const lastPosition = new (0, _three.Vector3)();
+            const lastQuaternion = new (0, _three.Quaternion)();
+            const twoPI = 2 * Math.PI;
+            return function update() {
+                const position = scope.object.position;
+                offset.copy(position).sub(scope.target);
+                // rotate offset to "y-axis-is-up" space
+                offset.applyQuaternion(quat);
+                // angle from z-axis around y-axis
+                spherical.setFromVector3(offset);
+                if (scope.autoRotate && state === STATE.NONE) rotateLeft(getAutoRotationAngle());
+                if (scope.enableDamping) {
+                    spherical.theta += sphericalDelta.theta * scope.dampingFactor;
+                    spherical.phi += sphericalDelta.phi * scope.dampingFactor;
+                } else {
+                    spherical.theta += sphericalDelta.theta;
+                    spherical.phi += sphericalDelta.phi;
+                }
+                // restrict theta to be between desired limits
+                let min = scope.minAzimuthAngle;
+                let max = scope.maxAzimuthAngle;
+                if (isFinite(min) && isFinite(max)) {
+                    if (min < -Math.PI) min += twoPI;
+                    else if (min > Math.PI) min -= twoPI;
+                    if (max < -Math.PI) max += twoPI;
+                    else if (max > Math.PI) max -= twoPI;
+                    if (min <= max) spherical.theta = Math.max(min, Math.min(max, spherical.theta));
+                    else spherical.theta = spherical.theta > (min + max) / 2 ? Math.max(min, spherical.theta) : Math.min(max, spherical.theta);
+                }
+                // restrict phi to be between desired limits
+                spherical.phi = Math.max(scope.minPolarAngle, Math.min(scope.maxPolarAngle, spherical.phi));
+                spherical.makeSafe();
+                spherical.radius *= scale;
+                // restrict radius to be between desired limits
+                spherical.radius = Math.max(scope.minDistance, Math.min(scope.maxDistance, spherical.radius));
+                // move target to panned location
+                if (scope.enableDamping === true) scope.target.addScaledVector(panOffset, scope.dampingFactor);
+                else scope.target.add(panOffset);
+                offset.setFromSpherical(spherical);
+                // rotate offset back to "camera-up-vector-is-up" space
+                offset.applyQuaternion(quatInverse);
+                position.copy(scope.target).add(offset);
+                scope.object.lookAt(scope.target);
+                if (scope.enableDamping === true) {
+                    sphericalDelta.theta *= 1 - scope.dampingFactor;
+                    sphericalDelta.phi *= 1 - scope.dampingFactor;
+                    panOffset.multiplyScalar(1 - scope.dampingFactor);
+                } else {
+                    sphericalDelta.set(0, 0, 0);
+                    panOffset.set(0, 0, 0);
+                }
+                scale = 1;
+                // update condition is:
+                // min(camera displacement, camera rotation in radians)^2 > EPS
+                // using small-angle approximation cos(x/2) = 1 - x^2 / 8
+                if (zoomChanged || lastPosition.distanceToSquared(scope.object.position) > EPS || 8 * (1 - lastQuaternion.dot(scope.object.quaternion)) > EPS) {
+                    scope.dispatchEvent(_changeEvent);
+                    lastPosition.copy(scope.object.position);
+                    lastQuaternion.copy(scope.object.quaternion);
+                    zoomChanged = false;
+                    return true;
+                }
+                return false;
+            };
+        }();
+        this.dispose = function() {
+            scope.domElement.removeEventListener('contextmenu', onContextMenu);
+            scope.domElement.removeEventListener('pointerdown', onPointerDown);
+            scope.domElement.removeEventListener('pointercancel', onPointerCancel);
+            scope.domElement.removeEventListener('wheel', onMouseWheel);
+            scope.domElement.removeEventListener('pointermove', onPointerMove);
+            scope.domElement.removeEventListener('pointerup', onPointerUp);
+            if (scope._domElementKeyEvents !== null) {
+                scope._domElementKeyEvents.removeEventListener('keydown', onKeyDown);
+                scope._domElementKeyEvents = null;
+            }
+        //scope.dispatchEvent( { type: 'dispose' } ); // should this be added here?
+        };
+        //
+        // internals
+        //
+        const scope = this;
+        const STATE = {
+            NONE: -1,
+            ROTATE: 0,
+            DOLLY: 1,
+            PAN: 2,
+            TOUCH_ROTATE: 3,
+            TOUCH_PAN: 4,
+            TOUCH_DOLLY_PAN: 5,
+            TOUCH_DOLLY_ROTATE: 6
+        };
+        let state = STATE.NONE;
+        const EPS = 0.000001;
+        // current position in spherical coordinates
+        const spherical = new (0, _three.Spherical)();
+        const sphericalDelta = new (0, _three.Spherical)();
+        let scale = 1;
+        const panOffset = new (0, _three.Vector3)();
+        let zoomChanged = false;
+        const rotateStart = new (0, _three.Vector2)();
+        const rotateEnd = new (0, _three.Vector2)();
+        const rotateDelta = new (0, _three.Vector2)();
+        const panStart = new (0, _three.Vector2)();
+        const panEnd = new (0, _three.Vector2)();
+        const panDelta = new (0, _three.Vector2)();
+        const dollyStart = new (0, _three.Vector2)();
+        const dollyEnd = new (0, _three.Vector2)();
+        const dollyDelta = new (0, _three.Vector2)();
+        const pointers = [];
+        const pointerPositions = {};
+        function getAutoRotationAngle() {
+            return 2 * Math.PI / 60 / 60 * scope.autoRotateSpeed;
+        }
+        function getZoomScale() {
+            return Math.pow(0.95, scope.zoomSpeed);
+        }
+        function rotateLeft(angle) {
+            sphericalDelta.theta -= angle;
+        }
+        function rotateUp(angle) {
+            sphericalDelta.phi -= angle;
+        }
+        const panLeft = function() {
+            const v = new (0, _three.Vector3)();
+            return function panLeft(distance, objectMatrix) {
+                v.setFromMatrixColumn(objectMatrix, 0); // get X column of objectMatrix
+                v.multiplyScalar(-distance);
+                panOffset.add(v);
+            };
+        }();
+        const panUp = function() {
+            const v = new (0, _three.Vector3)();
+            return function panUp(distance, objectMatrix) {
+                if (scope.screenSpacePanning === true) v.setFromMatrixColumn(objectMatrix, 1);
+                else {
+                    v.setFromMatrixColumn(objectMatrix, 0);
+                    v.crossVectors(scope.object.up, v);
+                }
+                v.multiplyScalar(distance);
+                panOffset.add(v);
+            };
+        }();
+        // deltaX and deltaY are in pixels; right and down are positive
+        const pan = function() {
+            const offset = new (0, _three.Vector3)();
+            return function pan(deltaX, deltaY) {
+                const element = scope.domElement;
+                if (scope.object.isPerspectiveCamera) {
+                    // perspective
+                    const position = scope.object.position;
+                    offset.copy(position).sub(scope.target);
+                    let targetDistance = offset.length();
+                    // half of the fov is center to top of screen
+                    targetDistance *= Math.tan(scope.object.fov / 2 * Math.PI / 180.0);
+                    // we use only clientHeight here so aspect ratio does not distort speed
+                    panLeft(2 * deltaX * targetDistance / element.clientHeight, scope.object.matrix);
+                    panUp(2 * deltaY * targetDistance / element.clientHeight, scope.object.matrix);
+                } else if (scope.object.isOrthographicCamera) {
+                    // orthographic
+                    panLeft(deltaX * (scope.object.right - scope.object.left) / scope.object.zoom / element.clientWidth, scope.object.matrix);
+                    panUp(deltaY * (scope.object.top - scope.object.bottom) / scope.object.zoom / element.clientHeight, scope.object.matrix);
+                } else {
+                    // camera neither orthographic nor perspective
+                    console.warn('WARNING: OrbitControls.js encountered an unknown camera type - pan disabled.');
+                    scope.enablePan = false;
+                }
+            };
+        }();
+        function dollyOut(dollyScale) {
+            if (scope.object.isPerspectiveCamera) scale /= dollyScale;
+            else if (scope.object.isOrthographicCamera) {
+                scope.object.zoom = Math.max(scope.minZoom, Math.min(scope.maxZoom, scope.object.zoom * dollyScale));
+                scope.object.updateProjectionMatrix();
+                zoomChanged = true;
+            } else {
+                console.warn('WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.');
+                scope.enableZoom = false;
+            }
+        }
+        function dollyIn(dollyScale) {
+            if (scope.object.isPerspectiveCamera) scale *= dollyScale;
+            else if (scope.object.isOrthographicCamera) {
+                scope.object.zoom = Math.max(scope.minZoom, Math.min(scope.maxZoom, scope.object.zoom / dollyScale));
+                scope.object.updateProjectionMatrix();
+                zoomChanged = true;
+            } else {
+                console.warn('WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.');
+                scope.enableZoom = false;
+            }
+        }
+        //
+        // event callbacks - update the object state
+        //
+        function handleMouseDownRotate(event) {
+            rotateStart.set(event.clientX, event.clientY);
+        }
+        function handleMouseDownDolly(event) {
+            dollyStart.set(event.clientX, event.clientY);
+        }
+        function handleMouseDownPan(event) {
+            panStart.set(event.clientX, event.clientY);
+        }
+        function handleMouseMoveRotate(event) {
+            rotateEnd.set(event.clientX, event.clientY);
+            rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(scope.rotateSpeed);
+            const element = scope.domElement;
+            rotateLeft(2 * Math.PI * rotateDelta.x / element.clientHeight); // yes, height
+            rotateUp(2 * Math.PI * rotateDelta.y / element.clientHeight);
+            rotateStart.copy(rotateEnd);
+            scope.update();
+        }
+        function handleMouseMoveDolly(event) {
+            dollyEnd.set(event.clientX, event.clientY);
+            dollyDelta.subVectors(dollyEnd, dollyStart);
+            if (dollyDelta.y > 0) dollyOut(getZoomScale());
+            else if (dollyDelta.y < 0) dollyIn(getZoomScale());
+            dollyStart.copy(dollyEnd);
+            scope.update();
+        }
+        function handleMouseMovePan(event) {
+            panEnd.set(event.clientX, event.clientY);
+            panDelta.subVectors(panEnd, panStart).multiplyScalar(scope.panSpeed);
+            pan(panDelta.x, panDelta.y);
+            panStart.copy(panEnd);
+            scope.update();
+        }
+        function handleMouseWheel(event) {
+            if (event.deltaY < 0) dollyIn(getZoomScale());
+            else if (event.deltaY > 0) dollyOut(getZoomScale());
+            scope.update();
+        }
+        function handleKeyDown(event) {
+            let needsUpdate = false;
+            switch(event.code){
+                case scope.keys.UP:
+                    if (event.ctrlKey || event.metaKey || event.shiftKey) rotateUp(2 * Math.PI * scope.rotateSpeed / scope.domElement.clientHeight);
+                    else pan(0, scope.keyPanSpeed);
+                    needsUpdate = true;
+                    break;
+                case scope.keys.BOTTOM:
+                    if (event.ctrlKey || event.metaKey || event.shiftKey) rotateUp(-2 * Math.PI * scope.rotateSpeed / scope.domElement.clientHeight);
+                    else pan(0, -scope.keyPanSpeed);
+                    needsUpdate = true;
+                    break;
+                case scope.keys.LEFT:
+                    if (event.ctrlKey || event.metaKey || event.shiftKey) rotateLeft(2 * Math.PI * scope.rotateSpeed / scope.domElement.clientHeight);
+                    else pan(scope.keyPanSpeed, 0);
+                    needsUpdate = true;
+                    break;
+                case scope.keys.RIGHT:
+                    if (event.ctrlKey || event.metaKey || event.shiftKey) rotateLeft(-2 * Math.PI * scope.rotateSpeed / scope.domElement.clientHeight);
+                    else pan(-scope.keyPanSpeed, 0);
+                    needsUpdate = true;
+                    break;
+            }
+            if (needsUpdate) {
+                // prevent the browser from scrolling on cursor keys
+                event.preventDefault();
+                scope.update();
+            }
+        }
+        function handleTouchStartRotate() {
+            if (pointers.length === 1) rotateStart.set(pointers[0].pageX, pointers[0].pageY);
+            else {
+                const x = 0.5 * (pointers[0].pageX + pointers[1].pageX);
+                const y = 0.5 * (pointers[0].pageY + pointers[1].pageY);
+                rotateStart.set(x, y);
+            }
+        }
+        function handleTouchStartPan() {
+            if (pointers.length === 1) panStart.set(pointers[0].pageX, pointers[0].pageY);
+            else {
+                const x = 0.5 * (pointers[0].pageX + pointers[1].pageX);
+                const y = 0.5 * (pointers[0].pageY + pointers[1].pageY);
+                panStart.set(x, y);
+            }
+        }
+        function handleTouchStartDolly() {
+            const dx = pointers[0].pageX - pointers[1].pageX;
+            const dy = pointers[0].pageY - pointers[1].pageY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            dollyStart.set(0, distance);
+        }
+        function handleTouchStartDollyPan() {
+            if (scope.enableZoom) handleTouchStartDolly();
+            if (scope.enablePan) handleTouchStartPan();
+        }
+        function handleTouchStartDollyRotate() {
+            if (scope.enableZoom) handleTouchStartDolly();
+            if (scope.enableRotate) handleTouchStartRotate();
+        }
+        function handleTouchMoveRotate(event) {
+            if (pointers.length == 1) rotateEnd.set(event.pageX, event.pageY);
+            else {
+                const position = getSecondPointerPosition(event);
+                const x = 0.5 * (event.pageX + position.x);
+                const y = 0.5 * (event.pageY + position.y);
+                rotateEnd.set(x, y);
+            }
+            rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(scope.rotateSpeed);
+            const element = scope.domElement;
+            rotateLeft(2 * Math.PI * rotateDelta.x / element.clientHeight); // yes, height
+            rotateUp(2 * Math.PI * rotateDelta.y / element.clientHeight);
+            rotateStart.copy(rotateEnd);
+        }
+        function handleTouchMovePan(event) {
+            if (pointers.length === 1) panEnd.set(event.pageX, event.pageY);
+            else {
+                const position = getSecondPointerPosition(event);
+                const x = 0.5 * (event.pageX + position.x);
+                const y = 0.5 * (event.pageY + position.y);
+                panEnd.set(x, y);
+            }
+            panDelta.subVectors(panEnd, panStart).multiplyScalar(scope.panSpeed);
+            pan(panDelta.x, panDelta.y);
+            panStart.copy(panEnd);
+        }
+        function handleTouchMoveDolly(event) {
+            const position = getSecondPointerPosition(event);
+            const dx = event.pageX - position.x;
+            const dy = event.pageY - position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            dollyEnd.set(0, distance);
+            dollyDelta.set(0, Math.pow(dollyEnd.y / dollyStart.y, scope.zoomSpeed));
+            dollyOut(dollyDelta.y);
+            dollyStart.copy(dollyEnd);
+        }
+        function handleTouchMoveDollyPan(event) {
+            if (scope.enableZoom) handleTouchMoveDolly(event);
+            if (scope.enablePan) handleTouchMovePan(event);
+        }
+        function handleTouchMoveDollyRotate(event) {
+            if (scope.enableZoom) handleTouchMoveDolly(event);
+            if (scope.enableRotate) handleTouchMoveRotate(event);
+        }
+        //
+        // event handlers - FSM: listen for events and reset state
+        //
+        function onPointerDown(event) {
+            if (scope.enabled === false) return;
+            if (pointers.length === 0) {
+                scope.domElement.setPointerCapture(event.pointerId);
+                scope.domElement.addEventListener('pointermove', onPointerMove);
+                scope.domElement.addEventListener('pointerup', onPointerUp);
+            }
+            //
+            addPointer(event);
+            if (event.pointerType === 'touch') onTouchStart(event);
+            else onMouseDown(event);
+        }
+        function onPointerMove(event) {
+            if (scope.enabled === false) return;
+            if (event.pointerType === 'touch') onTouchMove(event);
+            else onMouseMove(event);
+        }
+        function onPointerUp(event) {
+            removePointer(event);
+            if (pointers.length === 0) {
+                scope.domElement.releasePointerCapture(event.pointerId);
+                scope.domElement.removeEventListener('pointermove', onPointerMove);
+                scope.domElement.removeEventListener('pointerup', onPointerUp);
+            }
+            scope.dispatchEvent(_endEvent);
+            state = STATE.NONE;
+        }
+        function onPointerCancel(event) {
+            removePointer(event);
+        }
+        function onMouseDown(event) {
+            let mouseAction;
+            switch(event.button){
+                case 0:
+                    mouseAction = scope.mouseButtons.LEFT;
+                    break;
+                case 1:
+                    mouseAction = scope.mouseButtons.MIDDLE;
+                    break;
+                case 2:
+                    mouseAction = scope.mouseButtons.RIGHT;
+                    break;
+                default:
+                    mouseAction = -1;
+            }
+            switch(mouseAction){
+                case (0, _three.MOUSE).DOLLY:
+                    if (scope.enableZoom === false) return;
+                    handleMouseDownDolly(event);
+                    state = STATE.DOLLY;
+                    break;
+                case (0, _three.MOUSE).ROTATE:
+                    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+                        if (scope.enablePan === false) return;
+                        handleMouseDownPan(event);
+                        state = STATE.PAN;
+                    } else {
+                        if (scope.enableRotate === false) return;
+                        handleMouseDownRotate(event);
+                        state = STATE.ROTATE;
+                    }
+                    break;
+                case (0, _three.MOUSE).PAN:
+                    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+                        if (scope.enableRotate === false) return;
+                        handleMouseDownRotate(event);
+                        state = STATE.ROTATE;
+                    } else {
+                        if (scope.enablePan === false) return;
+                        handleMouseDownPan(event);
+                        state = STATE.PAN;
+                    }
+                    break;
+                default:
+                    state = STATE.NONE;
+            }
+            if (state !== STATE.NONE) scope.dispatchEvent(_startEvent);
+        }
+        function onMouseMove(event) {
+            switch(state){
+                case STATE.ROTATE:
+                    if (scope.enableRotate === false) return;
+                    handleMouseMoveRotate(event);
+                    break;
+                case STATE.DOLLY:
+                    if (scope.enableZoom === false) return;
+                    handleMouseMoveDolly(event);
+                    break;
+                case STATE.PAN:
+                    if (scope.enablePan === false) return;
+                    handleMouseMovePan(event);
+                    break;
+            }
+        }
+        function onMouseWheel(event) {
+            if (scope.enabled === false || scope.enableZoom === false || state !== STATE.NONE) return;
+            event.preventDefault();
+            scope.dispatchEvent(_startEvent);
+            handleMouseWheel(event);
+            scope.dispatchEvent(_endEvent);
+        }
+        function onKeyDown(event) {
+            if (scope.enabled === false || scope.enablePan === false) return;
+            handleKeyDown(event);
+        }
+        function onTouchStart(event) {
+            trackPointer(event);
+            switch(pointers.length){
+                case 1:
+                    switch(scope.touches.ONE){
+                        case (0, _three.TOUCH).ROTATE:
+                            if (scope.enableRotate === false) return;
+                            handleTouchStartRotate();
+                            state = STATE.TOUCH_ROTATE;
+                            break;
+                        case (0, _three.TOUCH).PAN:
+                            if (scope.enablePan === false) return;
+                            handleTouchStartPan();
+                            state = STATE.TOUCH_PAN;
+                            break;
+                        default:
+                            state = STATE.NONE;
+                    }
+                    break;
+                case 2:
+                    switch(scope.touches.TWO){
+                        case (0, _three.TOUCH).DOLLY_PAN:
+                            if (scope.enableZoom === false && scope.enablePan === false) return;
+                            handleTouchStartDollyPan();
+                            state = STATE.TOUCH_DOLLY_PAN;
+                            break;
+                        case (0, _three.TOUCH).DOLLY_ROTATE:
+                            if (scope.enableZoom === false && scope.enableRotate === false) return;
+                            handleTouchStartDollyRotate();
+                            state = STATE.TOUCH_DOLLY_ROTATE;
+                            break;
+                        default:
+                            state = STATE.NONE;
+                    }
+                    break;
+                default:
+                    state = STATE.NONE;
+            }
+            if (state !== STATE.NONE) scope.dispatchEvent(_startEvent);
+        }
+        function onTouchMove(event) {
+            trackPointer(event);
+            switch(state){
+                case STATE.TOUCH_ROTATE:
+                    if (scope.enableRotate === false) return;
+                    handleTouchMoveRotate(event);
+                    scope.update();
+                    break;
+                case STATE.TOUCH_PAN:
+                    if (scope.enablePan === false) return;
+                    handleTouchMovePan(event);
+                    scope.update();
+                    break;
+                case STATE.TOUCH_DOLLY_PAN:
+                    if (scope.enableZoom === false && scope.enablePan === false) return;
+                    handleTouchMoveDollyPan(event);
+                    scope.update();
+                    break;
+                case STATE.TOUCH_DOLLY_ROTATE:
+                    if (scope.enableZoom === false && scope.enableRotate === false) return;
+                    handleTouchMoveDollyRotate(event);
+                    scope.update();
+                    break;
+                default:
+                    state = STATE.NONE;
+            }
+        }
+        function onContextMenu(event) {
+            if (scope.enabled === false) return;
+            event.preventDefault();
+        }
+        function addPointer(event) {
+            pointers.push(event);
+        }
+        function removePointer(event) {
+            delete pointerPositions[event.pointerId];
+            for(let i = 0; i < pointers.length; i++)if (pointers[i].pointerId == event.pointerId) {
+                pointers.splice(i, 1);
+                return;
+            }
+        }
+        function trackPointer(event) {
+            let position = pointerPositions[event.pointerId];
+            if (position === undefined) {
+                position = new (0, _three.Vector2)();
+                pointerPositions[event.pointerId] = position;
+            }
+            position.set(event.pageX, event.pageY);
+        }
+        function getSecondPointerPosition(event) {
+            const pointer = event.pointerId === pointers[0].pointerId ? pointers[1] : pointers[0];
+            return pointerPositions[pointer.pointerId];
+        }
+        //
+        scope.domElement.addEventListener('contextmenu', onContextMenu);
+        scope.domElement.addEventListener('pointerdown', onPointerDown);
+        scope.domElement.addEventListener('pointercancel', onPointerCancel);
+        scope.domElement.addEventListener('wheel', onMouseWheel, {
+            passive: false
+        });
+        // force an update at start
+        this.update();
+    }
+}
+// This set of controls performs orbiting, dollying (zooming), and panning.
+// Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
+// This is very similar to OrbitControls, another set of touch behavior
+//
+//    Orbit - right mouse, or left mouse + ctrl/meta/shiftKey / touch: two-finger rotate
+//    Zoom - middle mouse, or mousewheel / touch: two-finger spread or squish
+//    Pan - left mouse, or arrow keys / touch: one-finger move
+class MapControls extends OrbitControls {
+    constructor(object, domElement){
+        super(object, domElement);
+        this.screenSpacePanning = false; // pan orthogonal to world-space direction camera.up
+        this.mouseButtons.LEFT = (0, _three.MOUSE).PAN;
+        this.mouseButtons.RIGHT = (0, _three.MOUSE).ROTATE;
+        this.touches.ONE = (0, _three.TOUCH).PAN;
+        this.touches.TWO = (0, _three.TOUCH).DOLLY_ROTATE;
+    }
+}
+
+},{"three":"dsoTF","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"2JKNf":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "FlyControls", ()=>FlyControls);
@@ -30472,6 +32545,7 @@ parcelHelpers.export(exports, "sharedHolders", ()=>sharedHolders);
 parcelHelpers.export(exports, "initializeData", ()=>initializeData);
 const parseCSV = (csvText)=>{
     const lines = csvText.trim().split('\n');
+    lines[0] = lines[0].replace('\r', '').replace('\uFEFF', ''); // remove CR and BOM
     const headers = lines[0].split(',');
     return lines.slice(1).map((line)=>{
         const values = line.split(',');
@@ -30524,12 +32598,39 @@ A77HErqtfN1hLLpvZ9pCtu66FEtM8BveoaKbbMoZ4RiR,32479739.27
 Ezhr48hfsyUg9zoAq7CH5opi7NbSM34RjrVFf4n8cVpo,8539942.52
 DBmae92YTQKLsNzXcPscxiwPqMcz9stQr2prB5ZCAHPd,8189534.80
 HVh6wHNBAsG3pq1Bj5oCzRjoWKVogEDHwUHkRz3ekFgt,7987933.45`;
+// Function to load a CSV file using XMLHttpRequest (synchronously)
+const loadCSVFile = (filePath)=>{
+    try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', filePath, false); // false for synchronous
+        xhr.send();
+        if (xhr.status === 200) return xhr.responseText;
+        else {
+            console.error(`Failed to load ${filePath} - status: ${xhr.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error loading ${filePath}:`, error);
+        return null;
+    }
+};
 // Load and process the CSV data
 const loadWalletData = ()=>{
     try {
+        // Try to load the full CSV files from the public directory
+        let fartcoinCSV = loadCSVFile('/fartcoin.csv');
+        let goatTokenCSV = loadCSVFile('/goattoken.csv');
+        // Fall back to embedded data if loading files failed
+        if (!fartcoinCSV || !goatTokenCSV) {
+            console.warn('Failed to load full CSV files. Using embedded sample data instead.');
+            fartcoinCSV = FARTCOIN_DATA;
+            goatTokenCSV = GOATTOKEN_DATA;
+        } else console.log("Successfully loaded full dataset of \uD83D\uDCA8 and \uD83D\uDC10 from CSV files (1000+ wallets each)");
         // Parse the CSV data
-        let fartcoinData = parseCSV(FARTCOIN_DATA);
-        let goatTokenData = parseCSV(GOATTOKEN_DATA);
+        let fartcoinData = parseCSV(fartcoinCSV);
+        let goatTokenData = parseCSV(goatTokenCSV);
+        console.log("\uD83D\uDC10 GOAT CSV RAW:\n", goatTokenCSV.slice(0, 300));
+        console.log("Parsed GOAT entries:", goatTokenData.length);
         // Filter out any entries without an address or amount
         fartcoinData = fartcoinData.filter((entry)=>entry.address && !isNaN(entry.amount));
         goatTokenData = goatTokenData.filter((entry)=>entry.address && !isNaN(entry.amount));
@@ -30566,8 +32667,8 @@ const loadWalletData = ()=>{
             const totalB = b.fartAmount + b.goatAmount;
             return totalB - totalA;
         });
-        console.log(`Loaded ${fartcoinData.length} Fartcoin holders`);
-        console.log(`Loaded ${goatTokenData.length} Goat Token holders`);
+        console.log(`Loaded ${fartcoinData.length} \u{1F4A8} holders`);
+        console.log(`Loaded ${goatTokenData.length} \u{1F410} holders`);
         console.log(`Found ${sharedHolders.length} shared wallet addresses`);
         return {
             fartcoinHolders: fartcoinData,
@@ -30621,8 +32722,9 @@ parcelHelpers.export(exports, "goatTokenPoints", ()=>goatTokenPoints);
 parcelHelpers.export(exports, "generateAllPoints", ()=>generateAllPoints);
 var _dataLoaderJs = require("./dataLoader.js");
 // Constants for the 3D positioning
-const baseRadius = 1000;
+const baseRadius = 1250; // Increased from 1000 to 1250 (25% increase) for better sphere separation
 const goldenAngle = 137.5 * (Math.PI / 180);
+const spacingFactor = 1.25; // 25% increased spacing between nodes
 // Helper function to generate random values in a range
 const randomBetween = (min, max)=>{
     return min + Math.random() * (max - min);
@@ -30638,19 +32740,22 @@ const mapSharedWallets = ()=>{
         // Calculate total holdings to determine importance
         const totalHolding = wallet.fartAmount + wallet.goatAmount;
         const normalizedIndex = i / (0, _dataLoaderJs.sharedHolders).length;
-        // Limit radius to within 800 for shared wallets and cluster more tightly
-        const r = Math.min(800, baseRadius * Math.log(normalizedIndex + 1.5) / 3);
+        // Limit radius to within 1000 for shared wallets and cluster more tightly
+        // Increased from 800 to 1000 for better sphere separation
+        const r = Math.min(1000, baseRadius * Math.log(normalizedIndex + 1.5) / 3);
         const theta = i * goldenAngle;
         const phi = i * 0.5;
-        // Calculate base positions using spherical coordinates
-        let x = r * Math.cos(theta) * Math.sin(phi);
-        let y = r * Math.sin(theta) * Math.sin(phi);
-        let z = r * Math.cos(phi);
+        // Calculate base positions using spherical coordinates with increased spacing
+        let x = r * spacingFactor * Math.cos(theta) * Math.sin(phi);
+        let y = r * spacingFactor * Math.sin(theta) * Math.sin(phi);
+        let z = r * spacingFactor * Math.cos(phi);
         // Add small noise for more natural appearance
-        x += randomBetween(-baseRadius / 15, baseRadius / 15);
-        y += randomBetween(-baseRadius / 15, baseRadius / 15);
-        z += randomBetween(-baseRadius / 15, baseRadius / 15);
-        // Add brightness based on holdings
+        // Scale noise proportionally to maintain visual consistency
+        x += randomBetween(-baseRadius / 18, baseRadius / 18); // Reduced from /15 to /18 to keep noise proportional
+        y += randomBetween(-baseRadius / 18, baseRadius / 18);
+        z += randomBetween(-baseRadius / 18, baseRadius / 18);
+        // White color for shared wallets (wallets holding both Fartcoin and Goat tokens)
+        // Brightness correlates with token amount
         const brightness = Math.min(255, Math.floor(200 + totalHolding / 1000000));
         const color = `rgb(${brightness}, ${brightness}, ${brightness})`;
         return {
@@ -30660,6 +32765,8 @@ const mapSharedWallets = ()=>{
             address: wallet.address,
             fartAmount: wallet.fartAmount,
             goatAmount: wallet.goatAmount,
+            totalHolding,
+            walletType: 'shared',
             color
         };
     });
@@ -30672,32 +32779,36 @@ const mapFartcoinWallets = ()=>{
         return [];
     }
     return (0, _dataLoaderJs.fartcoinHolders).map((wallet, i)=>{
-        // Use logarithmic scaling for more interesting distribution
+        // Use logarithmic scaling for more interesting distribution with increased spacing
         const r = baseRadius * Math.log(i + 2);
         const theta = i * goldenAngle;
         const phi = i * 0.5;
-        // Base position calculation - shifted toward +X axis
-        let x = r * Math.cos(theta) + baseRadius;
-        let y = r * Math.sin(theta);
-        let z = r * Math.sin(phi);
-        // Add fractal sub-clusters by using modulo operations
+        // Base position calculation - shifted toward +X axis with increased spacing
+        let x = r * spacingFactor * Math.cos(theta) + baseRadius;
+        let y = r * spacingFactor * Math.sin(theta);
+        let z = r * spacingFactor * Math.sin(phi);
+        // Add fractal sub-clusters by using modulo operations - increase spacing
         if (i % 5 === 0) {
-            x += 200 * Math.sin(i);
-            y += 200 * Math.cos(i);
+            x += 250 * Math.sin(i); // Increased from 200 to 250
+            y += 250 * Math.cos(i); // Increased from 200 to 250
         }
-        // Add small noise
-        x += randomBetween(-baseRadius / 10, baseRadius / 10);
-        y += randomBetween(-baseRadius / 10, baseRadius / 10);
-        z += randomBetween(-baseRadius / 10, baseRadius / 10);
-        // Generate green-tinted color based on holdings
+        // Add small noise - adjusted for increased spacing
+        x += randomBetween(-baseRadius / 12, baseRadius / 12); // Reduced from /10 to /12 for proportional noise
+        y += randomBetween(-baseRadius / 12, baseRadius / 12);
+        z += randomBetween(-baseRadius / 12, baseRadius / 12);
+        // Green color for Fartcoin-only wallets
+        // Brightness correlates with token amount
         const brightness = Math.min(200, Math.floor(50 + wallet.amount / 1000000));
-        const color = `rgb(0, ${brightness + 55}, ${Math.floor(brightness / 2)})`;
+        const color = `rgb(0, ${brightness + 55}, 0)`;
         return {
             x,
             y,
             z,
             address: wallet.address,
-            amount: wallet.amount,
+            fartAmount: wallet.amount,
+            goatAmount: 0,
+            totalHolding: wallet.amount,
+            walletType: 'fartcoin',
             color
         };
     });
@@ -30710,32 +32821,36 @@ const mapGoatTokenWallets = ()=>{
         return [];
     }
     return (0, _dataLoaderJs.goatTokenHolders).map((wallet, i)=>{
-        // Use logarithmic scaling for more interesting distribution
+        // Use logarithmic scaling for more interesting distribution with increased spacing
         const r = baseRadius * Math.log(i + 2);
         const theta = i * goldenAngle;
         const phi = i * 0.5;
-        // Base position calculation - shifted toward -X axis (mirrored from Fartcoin)
-        let x = -(r * Math.cos(theta)) - baseRadius;
-        let y = r * Math.sin(theta);
-        let z = r * Math.sin(phi);
-        // Add fractal sub-clusters by using modulo operations
+        // Base position calculation - shifted toward -X axis (mirrored from Fartcoin) with increased spacing
+        let x = -(r * spacingFactor * Math.cos(theta)) - baseRadius;
+        let y = r * spacingFactor * Math.sin(theta);
+        let z = r * spacingFactor * Math.sin(phi);
+        // Add fractal sub-clusters by using modulo operations - increase spacing
         if (i % 5 === 0) {
-            x -= 200 * Math.sin(i);
-            y += 200 * Math.cos(i);
+            x -= 250 * Math.sin(i); // Increased from 200 to 250
+            y += 250 * Math.cos(i); // Increased from 200 to 250
         }
-        // Add small noise
-        x += randomBetween(-baseRadius / 10, baseRadius / 10);
-        y += randomBetween(-baseRadius / 10, baseRadius / 10);
-        z += randomBetween(-baseRadius / 10, baseRadius / 10);
-        // Generate blue-tinted color based on holdings
+        // Add small noise - adjusted for increased spacing
+        x += randomBetween(-baseRadius / 12, baseRadius / 12); // Reduced from /10 to /12 for proportional noise
+        y += randomBetween(-baseRadius / 12, baseRadius / 12);
+        z += randomBetween(-baseRadius / 12, baseRadius / 12);
+        // Blue color for Goat-only wallets
+        // Brightness correlates with token amount
         const brightness = Math.min(200, Math.floor(50 + wallet.amount / 1000000));
-        const color = `rgb(${Math.floor(brightness / 2)}, ${Math.floor(brightness / 2)}, ${brightness + 55})`;
+        const color = `rgb(0, 0, ${brightness + 55})`;
         return {
             x,
             y,
             z,
             address: wallet.address,
-            amount: wallet.amount,
+            fartAmount: 0,
+            goatAmount: wallet.amount,
+            totalHolding: wallet.amount,
+            walletType: 'goat',
             color
         };
     });
@@ -30782,6 +32897,515 @@ exports.default = {
     goatTokenPoints
 };
 
-},{"./dataLoader.js":"hzZur","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}]},["kN58U","fILKw"], "fILKw", "parcelRequired5ab", {})
+},{"./dataLoader.js":"hzZur","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"5n8hE":[function(require,module,exports,__globalThis) {
+// Tooltip Fix - Check if element exists and create it if not
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+console.log("Tooltip Fix script running");
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded - checking for tooltip element");
+    // Check if tooltip exists
+    let tooltip = document.getElementById('wallet-tooltip');
+    console.log("Tooltip element exists:", tooltip !== null);
+    if (!tooltip) {
+        console.log("Creating missing tooltip element");
+        // Create tooltip element
+        tooltip = document.createElement('div');
+        tooltip.id = 'wallet-tooltip';
+        tooltip.style.position = 'absolute';
+        tooltip.style.display = 'none';
+        tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        tooltip.style.color = 'white';
+        tooltip.style.padding = '10px';
+        tooltip.style.borderRadius = '5px';
+        tooltip.style.fontSize = '12px';
+        tooltip.style.pointerEvents = 'none';
+        tooltip.style.zIndex = '1000';
+        tooltip.style.maxWidth = '250px';
+        tooltip.style.transition = 'opacity 0.3s';
+        tooltip.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+        tooltip.style.boxShadow = '0 0 10px rgba(0, 100, 255, 0.5)';
+        // Create tooltip content
+        tooltip.innerHTML = `
+      <div class="tooltip-title" style="font-weight: bold; margin-bottom: 5px; font-size: 14px; color: #88ccff;">Wallet Details</div>
+      <div class="tooltip-address" style="font-family: monospace; font-size: 12px; margin-bottom: 8px; color: #aaccff; word-break: break-all;">0x0000...0000</div>
+      <div class="tooltip-holdings" style="margin-bottom: 5px;">
+        <div class="tooltip-fartcoin" style="color: #88ff88;">\u{1F4A8}: 0</div>
+        <div class="tooltip-goat" style="color: #8888ff;">\u{1F410}: 0</div>
+      </div>
+      <div class="tooltip-total" style="margin-top: 8px; font-weight: bold; color: #ffffff;">Total Value: 0</div>
+    `;
+        // Add to document
+        document.body.appendChild(tooltip);
+        console.log("Created and added tooltip element to body");
+    }
+});
+// Export nothing - this is just for the side effects
+exports.default = {};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"j2vfp":[function(require,module,exports,__globalThis) {
+/**
+ * walletTooltip.js - A standalone tooltip solution for wallet data
+ * 
+ * This creates a visible floating tooltip that isn't dependent on HTML elements
+ * but is drawn directly on the canvas.
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _three = require("three");
+class WalletTooltip {
+    constructor(scene, camera){
+        this.scene = scene;
+        this.camera = camera;
+        this.visible = false;
+        this.walletData = null;
+        this.position = new _three.Vector3();
+        this.offset = new _three.Vector3(0, 200, 0);
+        // Create sprite for the tooltip background
+        const tooltipTexture = this.createTooltipTexture();
+        this.tooltipMaterial = new _three.SpriteMaterial({
+            map: tooltipTexture,
+            transparent: true,
+            opacity: 0.9,
+            depthTest: false,
+            depthWrite: false
+        });
+        this.tooltipSprite = new _three.Sprite(this.tooltipMaterial);
+        this.tooltipSprite.scale.set(400, 200, 1);
+        this.tooltipSprite.visible = false;
+        this.scene.add(this.tooltipSprite);
+        console.log('Created 3D wallet tooltip');
+    }
+    createTooltipTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const context = canvas.getContext('2d');
+        // Draw background
+        context.fillStyle = 'rgba(0, 10, 30, 0.9)';
+        context.strokeStyle = 'rgba(100, 200, 255, 0.8)';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 15);
+        context.fill();
+        context.stroke();
+        // Add title text
+        context.fillStyle = '#88ccff';
+        context.font = 'bold 24px Arial';
+        context.fillText('Wallet Details', 30, 40);
+        // Add placeholder text
+        context.fillStyle = '#ffffff';
+        context.font = '16px Monospace';
+        context.fillText('Address: 0x000...000', 30, 80);
+        context.fillStyle = '#88ff88';
+        context.fillText('Fartcoin: 0', 30, 110);
+        context.fillStyle = '#8888ff';
+        context.fillText('Goat: 0', 30, 140);
+        context.fillStyle = '#ffffff';
+        context.font = 'bold 16px Arial';
+        context.fillText('Total Value: 0', 30, 180);
+        // Create texture
+        const texture = new _three.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        // Store context for updates
+        this.canvasContext = context;
+        this.canvas = canvas;
+        return texture;
+    }
+    updateTooltipContent(walletData) {
+        if (!walletData) return;
+        const context = this.canvasContext;
+        // Clear the previous content
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Draw background
+        context.fillStyle = 'rgba(0, 10, 30, 0.9)';
+        context.strokeStyle = 'rgba(100, 200, 255, 0.8)';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.roundRect(10, 10, this.canvas.width - 20, this.canvas.height - 20, 15);
+        context.fill();
+        context.stroke();
+        // Add title text
+        context.fillStyle = '#88ccff';
+        context.font = 'bold 24px Arial';
+        context.fillText('Wallet Details', 30, 40);
+        // Format address
+        const address = walletData.address;
+        const shortAddress = address.length > 12 ? `${address.substring(0, 8)}...${address.substring(address.length - 4)}` : address;
+        // Format values
+        const fartAmountFormatted = walletData.fartAmount.toLocaleString(undefined, {
+            maximumFractionDigits: 2
+        });
+        const goatAmountFormatted = walletData.goatAmount.toLocaleString(undefined, {
+            maximumFractionDigits: 2
+        });
+        const totalAmountFormatted = (walletData.fartAmount + walletData.goatAmount).toLocaleString(undefined, {
+            maximumFractionDigits: 2
+        });
+        // Add wallet data
+        context.fillStyle = '#aaccff';
+        context.font = '16px Monospace';
+        context.fillText(`Address: ${shortAddress}`, 30, 80);
+        context.fillStyle = '#88ff88';
+        context.fillText(`Fartcoin: ${fartAmountFormatted}`, 30, 110);
+        context.fillStyle = '#8888ff';
+        context.fillText(`Goat: ${goatAmountFormatted}`, 30, 140);
+        context.fillStyle = '#ffffff';
+        context.font = 'bold 16px Arial';
+        context.fillText(`Total Value: ${totalAmountFormatted}`, 30, 180);
+        // Update texture
+        this.tooltipMaterial.map.needsUpdate = true;
+    }
+    show(walletData, worldPosition) {
+        this.walletData = walletData;
+        this.position.copy(worldPosition);
+        this.updateTooltipContent(walletData);
+        this.tooltipSprite.visible = true;
+        this.visible = true;
+        console.log('Showing 3D tooltip');
+    }
+    hide() {
+        this.tooltipSprite.visible = false;
+        this.visible = false;
+        console.log('Hiding 3D tooltip');
+    }
+    update() {
+        if (!this.visible) return;
+        // Position tooltip to follow target position in world space
+        // but offset to the right side
+        // Get position in screen space
+        const screenPosition = this.position.clone().project(this.camera);
+        // Add offset to the right
+        screenPosition.x += 0.2;
+        // Convert back to world space
+        const worldPosition = screenPosition.clone().unproject(this.camera);
+        // Set tooltip position
+        this.tooltipSprite.position.copy(worldPosition);
+        // Position at the same distance as camera
+        const cameraDistance = this.camera.position.distanceTo(this.position);
+        const direction = worldPosition.clone().sub(this.camera.position).normalize();
+        this.tooltipSprite.position.copy(this.camera.position).add(direction.multiplyScalar(cameraDistance * 0.8));
+    }
+}
+exports.default = WalletTooltip;
+
+},{"three":"dsoTF","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"888Yo":[function(require,module,exports,__globalThis) {
+/**
+ * directTooltipFix.js - Emergency fix for wallet metadata tooltip
+ * 
+ * This file provides direct, simple fixes for the wallet tooltip issues:
+ * 1. Ensures the tooltip element exists and is properly styled
+ * 2. Forces visibility when wallet data is available
+ * 3. Provides a fallback mechanism for displaying wallet data
+ */ // Direct tooltip update function that will be called when hovering over a wallet
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "updateTooltipContent", ()=>updateTooltipContent);
+// Show tooltip at specified position
+parcelHelpers.export(exports, "showTooltip", ()=>showTooltip);
+// Hide tooltip
+parcelHelpers.export(exports, "hideTooltip", ()=>hideTooltip);
+// Create tooltip if missing
+parcelHelpers.export(exports, "createTooltipIfMissing", ()=>createTooltipIfMissing);
+function updateTooltipContent(tooltip, walletData) {
+    if (!tooltip || !walletData) {
+        console.error('Missing tooltip element or wallet data:', {
+            tooltip: !!tooltip,
+            walletData: !!walletData
+        });
+        return false;
+    }
+    // Ensure tooltip is visible with a high z-index
+    tooltip.style.display = 'block';
+    tooltip.style.zIndex = '10000';
+    tooltip.style.backgroundColor = 'rgba(0, 10, 30, 0.95)'; // Darker, more opaque background
+    tooltip.style.border = '2px solid rgba(100, 200, 255, 0.8)'; // Brighter border
+    tooltip.style.boxShadow = '0 0 15px rgba(0, 100, 255, 0.7)'; // Stronger glow effect
+    // Format address for display (shorten if needed)
+    const address = walletData.address || '0x0000...0000';
+    const shortAddress = address.length > 16 ? `${address.substring(0, 8)}...${address.substring(address.length - 8)}` : address;
+    // Get token amounts with fallbacks to zero
+    const fartAmount = walletData.fartAmount || 0;
+    const goatAmount = walletData.goatAmount || 0;
+    // Format numbers with commas and 2 decimal places
+    const fartAmountFormatted = fartAmount.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+    });
+    const goatAmountFormatted = goatAmount.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+    });
+    const totalAmountFormatted = (fartAmount + goatAmount).toLocaleString(undefined, {
+        maximumFractionDigits: 2
+    });
+    // Determine token holdings description
+    let holdingsType = '';
+    if (fartAmount > 0 && goatAmount > 0) holdingsType = "Holds both \uD83D\uDCA8 and \uD83D\uDC10";
+    else if (fartAmount > 0) holdingsType = "Holds \uD83D\uDCA8 only";
+    else if (goatAmount > 0) holdingsType = "Holds \uD83D\uDC10 only";
+    else holdingsType = 'No tokens found';
+    // Update tooltip content - without Total Value line
+    tooltip.innerHTML = `
+    <div class="tooltip-title" style="font-weight: bold; margin-bottom: 5px; font-size: 14px; color: #88ccff;">Wallet Details</div>
+    <div class="tooltip-address" style="font-family: monospace; font-size: 12px; margin-bottom: 8px; color: #aaccff; word-break: break-all;">${shortAddress}</div>
+    <div class="tooltip-type" style="margin-bottom: 5px; color: #ffcc88;">${holdingsType}</div>
+    <div class="tooltip-holdings" style="margin-bottom: 5px;">
+      <div class="tooltip-fartcoin" style="color: #88ff88;">\u{1F4A8}: ${fartAmountFormatted}</div>
+      <div class="tooltip-goat" style="color: #8888ff;">\u{1F410}: ${goatAmountFormatted}</div>
+    </div>
+  `;
+    console.log('Updated tooltip with wallet data:', shortAddress);
+    return true;
+}
+function showTooltip(tooltip, x, y, walletData) {
+    if (!tooltip) {
+        console.error('Tooltip element is missing, cannot show');
+        return false;
+    }
+    // Position with offset from cursor
+    tooltip.style.left = x + 15 + 'px';
+    tooltip.style.top = y + 15 + 'px';
+    // Update content and ensure visibility
+    const updated = updateTooltipContent(tooltip, walletData);
+    if (updated) {
+        tooltip.style.display = 'block';
+        console.log('Tooltip shown at position:', x, y);
+        return true;
+    }
+    return false;
+}
+function hideTooltip(tooltip) {
+    if (tooltip) {
+        tooltip.style.display = 'none';
+        console.log('Tooltip hidden');
+        return true;
+    }
+    return false;
+}
+function createTooltipIfMissing() {
+    let tooltip = document.getElementById('wallet-tooltip');
+    if (!tooltip) {
+        console.log('Creating missing tooltip element');
+        // Create tooltip element with inline styles for reliability
+        tooltip = document.createElement('div');
+        tooltip.id = 'wallet-tooltip';
+        tooltip.style.position = 'absolute';
+        tooltip.style.display = 'none';
+        tooltip.style.backgroundColor = 'rgba(0, 10, 30, 0.95)';
+        tooltip.style.color = 'white';
+        tooltip.style.padding = '10px';
+        tooltip.style.borderRadius = '5px';
+        tooltip.style.fontSize = '12px';
+        tooltip.style.pointerEvents = 'none';
+        tooltip.style.zIndex = '10000'; // Very high z-index
+        tooltip.style.maxWidth = '250px';
+        tooltip.style.transition = 'opacity 0.3s';
+        tooltip.style.border = '2px solid rgba(100, 200, 255, 0.8)';
+        tooltip.style.boxShadow = '0 0 15px rgba(0, 100, 255, 0.7)';
+        // Create tooltip content - without Total Value line
+        tooltip.innerHTML = `
+      <div class="tooltip-title" style="font-weight: bold; margin-bottom: 5px; font-size: 14px; color: #88ccff;">Wallet Details</div>
+      <div class="tooltip-address" style="font-family: monospace; font-size: 12px; margin-bottom: 8px; color: #aaccff; word-break: break-all;">0x0000...0000</div>
+      <div class="tooltip-type" style="margin-bottom: 5px; color: #ffcc88;">Loading...</div>
+      <div class="tooltip-holdings" style="margin-bottom: 5px;">
+        <div class="tooltip-fartcoin" style="color: #88ff88;">Fartcoin: 0</div>
+        <div class="tooltip-goat" style="color: #8888ff;">Goatcoin: 0</div>
+      </div>
+    `;
+        // Add to document body
+        document.body.appendChild(tooltip);
+        console.log('Created and added tooltip element to body');
+    }
+    return tooltip;
+}
+// Export a default object with all functions
+exports.default = {
+    updateTooltipContent,
+    showTooltip,
+    hideTooltip,
+    createTooltipIfMissing
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"3O8vy":[function(require,module,exports,__globalThis) {
+/**
+ * Fireworks Particle System
+ * Creates burst-style fireworks in the 3D background using Three.js
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Initialize the fireworks system
+ * @param {THREE.Scene} scene - The scene to add the fireworks to
+ */ parcelHelpers.export(exports, "initFireworks", ()=>initFireworks);
+/**
+ * Update all fireworks (called in animation loop)
+ * @param {THREE.Scene} scene - The scene containing the fireworks
+ * @param {number} deltaTime - Time since last update in seconds
+ */ parcelHelpers.export(exports, "updateFireworks", ()=>updateFireworks);
+var _three = require("three");
+// Fireworks system state
+const fireworks = [];
+const maxFireworks = 10; // Maximum number of simultaneous fireworks
+const burstInterval = {
+    min: 2000,
+    max: 4000
+}; // Random interval between bursts (2-4 seconds)
+let lastBurstTime = 0;
+// Colors for fireworks - bright reds, blues, purples, yellows
+const fireworkColors = [
+    new _three.Color(1.0, 0.2, 0.2),
+    new _three.Color(0.2, 0.2, 1.0),
+    new _three.Color(0.8, 0.2, 1.0),
+    new _three.Color(1.0, 1.0, 0.2),
+    new _three.Color(1.0, 0.5, 0.0),
+    new _three.Color(0.0, 1.0, 0.5),
+    new _three.Color(1.0, 0.2, 0.8) // Pink
+];
+/**
+ * Create a particle texture for fireworks
+ */ function createParticleTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext('2d');
+    const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)');
+    gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 32, 32);
+    const texture = new _three.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+}
+// Create the particle texture once
+const particleTexture = createParticleTexture();
+/**
+ * Create a single firework explosion
+ * @param {THREE.Scene} scene - The scene to add the firework to
+ */ function createFirework(scene) {
+    // Random position in the distant background
+    const position = new _three.Vector3((Math.random() - 0.5) * 30000, 10000 + Math.random() * 10000, -15000 - Math.random() * 10000 // Z position (-15000 to -25000) - behind content
+    );
+    // Random color from our palette
+    const color = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
+    // Number of particles in this burst
+    const particleCount = 100 + Math.floor(Math.random() * 150);
+    // Create geometry for the particles
+    const geometry = new _three.BufferGeometry();
+    // Arrays to store particle positions and velocities
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+    // Create the burst pattern
+    for(let i = 0; i < particleCount; i++){
+        const i3 = i * 3;
+        // All particles start at the burst center
+        positions[i3] = position.x;
+        positions[i3 + 1] = position.y;
+        positions[i3 + 2] = position.z;
+        // Random velocity in sphere direction
+        const speed = 20 + Math.random() * 30;
+        const angle = Math.random() * Math.PI * 2;
+        const elevation = Math.random() * Math.PI - Math.PI / 2;
+        velocities[i3] = Math.cos(angle) * Math.cos(elevation) * speed;
+        velocities[i3 + 1] = Math.sin(elevation) * speed;
+        velocities[i3 + 2] = Math.sin(angle) * Math.cos(elevation) * speed;
+        // Base color with slight variation
+        colors[i3] = color.r * (0.8 + Math.random() * 0.4);
+        colors[i3 + 1] = color.g * (0.8 + Math.random() * 0.4);
+        colors[i3 + 2] = color.b * (0.8 + Math.random() * 0.4);
+        // Random particle sizes
+        sizes[i] = 2 + Math.random() * 4;
+    }
+    // Set the attributes for the geometry
+    geometry.setAttribute('position', new _three.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new _three.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new _three.BufferAttribute(sizes, 1));
+    // Create the material for the particles
+    const material = new _three.PointsMaterial({
+        size: 3,
+        map: particleTexture,
+        transparent: true,
+        vertexColors: true,
+        blending: _three.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+    });
+    // Create the particle system
+    const particleSystem = new _three.Points(geometry, material);
+    particleSystem.name = 'firework';
+    // Add metadata
+    particleSystem.userData = {
+        velocities,
+        positions,
+        sizes,
+        age: 0,
+        maxAge: 2 + Math.random() * 1,
+        gravity: -4,
+        fadeStart: 0.7 // When to start fading (fraction of maxAge)
+    };
+    // Add to scene and tracking array
+    scene.add(particleSystem);
+    fireworks.push(particleSystem);
+    return particleSystem;
+}
+function initFireworks(scene) {
+    // Nothing to do at init time, fireworks will be created during update
+    console.log('Fireworks particle system initialized');
+    lastBurstTime = Date.now();
+}
+function updateFireworks(scene, deltaTime) {
+    const currentTime = Date.now();
+    // Check if it's time to create a new firework
+    if (currentTime - lastBurstTime > burstInterval.min + Math.random() * (burstInterval.max - burstInterval.min)) // Don't create too many fireworks
+    {
+        if (fireworks.length < maxFireworks) {
+            createFirework(scene);
+            lastBurstTime = currentTime;
+        }
+    }
+    // Update existing fireworks
+    for(let i = fireworks.length - 1; i >= 0; i--){
+        const firework = fireworks[i];
+        const userData = firework.userData;
+        // Update age
+        userData.age += deltaTime;
+        // If the firework has expired, remove it
+        if (userData.age >= userData.maxAge) {
+            scene.remove(firework);
+            fireworks.splice(i, 1);
+            continue;
+        }
+        // Get attributes for updating
+        const positions = firework.geometry.attributes.position.array;
+        const velocities = userData.velocities;
+        const sizes = firework.geometry.attributes.size.array;
+        // Calculate opacity based on age
+        const lifeRatio = userData.age / userData.maxAge;
+        // Apply physics to each particle
+        for(let j = 0; j < positions.length / 3; j++){
+            const j3 = j * 3;
+            // Update position based on velocity
+            positions[j3] += velocities[j3] * deltaTime;
+            positions[j3 + 1] += velocities[j3 + 1] * deltaTime;
+            positions[j3 + 2] += velocities[j3 + 2] * deltaTime;
+            // Apply gravity effect
+            velocities[j3 + 1] += userData.gravity * deltaTime;
+            // Shrink particles over time
+            if (lifeRatio > userData.fadeStart) {
+                const fadeRatio = (lifeRatio - userData.fadeStart) / (1 - userData.fadeStart);
+                sizes[j] = Math.max(0.1, sizes[j] * (1 - fadeRatio * 0.1));
+            }
+        }
+        // Update opacity based on lifetime
+        firework.material.opacity = lifeRatio > userData.fadeStart ? 1 - (lifeRatio - userData.fadeStart) / (1 - userData.fadeStart) : 1;
+        // Mark attributes as needing update
+        firework.geometry.attributes.position.needsUpdate = true;
+        firework.geometry.attributes.size.needsUpdate = true;
+    }
+}
+
+},{"three":"dsoTF","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}]},["6zReE","fILKw"], "fILKw", "parcelRequired5ab", {})
 
 //# sourceMappingURL=public.1fcc916e.js.map

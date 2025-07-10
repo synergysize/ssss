@@ -1,0 +1,3 @@
+To https://github.com/synergysize/ssss.git
+ + 7dd0ad4...0e7557a main -> main (forced update)
+All fixes reapplied and pushed to ssss. Jetpack confirmed working.

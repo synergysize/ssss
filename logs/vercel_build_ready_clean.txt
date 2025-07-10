@@ -1,0 +1,1 @@
+All paths fixed, clean build in /dist. Ready to deploy to Vercel.
