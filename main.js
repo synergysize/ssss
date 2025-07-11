@@ -6,6 +6,7 @@ import { loadWalletData } from './dataLoader.js';
 import { generateFractalPosition, generateNodeSize, getWalletColor, initGalaxyContainer, galaxyContainer } from './fractalPlacement.js';
 import { TooltipHandler } from './tooltipHandler.js';
 import { createGlowMaterial } from './shaders.js';
+import { createNodeConnections, updateTransactionPulses, triggerRandomTransactionPulse } from './nodeConnections.js';
 
 // Global variables
 let scene, camera, renderer;
@@ -26,6 +27,9 @@ let stats = {
   goattokenCount: 0,
   totalCount: 0
 };
+
+// Node connection variables
+let nodeConnectionObjects = null;
 
 // Initialize the application
 async function init() {
@@ -273,6 +277,46 @@ function createWalletVisualization() {
   
   stats.totalCount = walletNodes.length;
   console.log(`Created ${walletNodes.length} wallet nodes (${stats.fartcoinCount} Fartcoin, ${stats.goattokenCount} Goattoken)`);
+  
+  // Create node connections and store the connection objects
+  console.log('Creating node connection mesh...');
+  nodeConnectionObjects = createNodeConnections(walletNodes, galaxyObject);
+  
+  // Log the connection statistics
+  const connectionStats = nodeConnectionObjects.connectionData;
+  console.log(`Created node connections: ${connectionStats.totalConnections} total ` +
+              `(${connectionStats.fartcoinConnections} Fartcoin, ${connectionStats.goattokenConnections} Goattoken)`);
+  
+  // Create a log file with connection information
+  createConnectionLog(connectionStats);
+}
+
+// Create a log file with connection information
+function createConnectionLog(connectionStats) {
+  // This function would normally write to a file, but in a browser environment,
+  // we'll just log to console and simulate the file creation
+  const logData = {
+    timestamp: new Date().toISOString(),
+    stats: {
+      nodes: {
+        total: stats.totalCount,
+        fartcoin: stats.fartcoinCount,
+        goattoken: stats.goattokenCount
+      },
+      connections: connectionStats
+    },
+    configuration: {
+      opacity: 0.03,
+      pulseDuration: 0.5,
+      pulseInterval: '300-500ms'
+    }
+  };
+  
+  console.log('Node mesh connection log:', logData);
+  
+  // In a production environment, we would save this to a file
+  // For now, we'll just add it to window object for debugging
+  window.nodeConnectionLog = logData;
 }
 
 // Handle window resize
@@ -399,6 +443,11 @@ function animate() {
         }
       }
     });
+    
+    // Update transaction pulses if connections are initialized
+    if (nodeConnectionObjects) {
+      updateTransactionPulses();
+    }
     
     // Render the scene
     renderer.render(scene, camera);

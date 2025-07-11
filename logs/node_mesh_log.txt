@@ -1,0 +1,45 @@
+======== NODE MESH CONNECTION LOG ========
+Date: 2025-07-10
+
+IMPLEMENTATION SUMMARY:
+- Successfully implemented node connections between wallets of the same type
+- Created separate connection meshes for Fartcoin and Goattoken nodes
+- Added animated transaction pulses with fade-in/fade-out effects
+- Optimized performance with buffer geometry and limited connections per node
+
+CONFIGURATION:
+- Base connection opacity: 0.03
+- Pulse duration: 0.5 seconds
+- Pulse interval: 300-500ms (randomized)
+- Maximum active pulses: 50
+- Connection colors: 
+  * Fartcoin: 0x8A2BE2 (Purple)
+  * Goattoken: 0xFFA500 (Orange)
+- Pulse colors:
+  * Fartcoin: 0xB866FF (Bright Purple)
+  * Goattoken: 0xFFB347 (Bright Orange)
+
+OPTIMIZATION STRATEGIES:
+1. Dynamic connection density based on node count:
+   - Large node sets (>500): 3 connections per node
+   - Medium node sets (100-500): 5-10 connections per node
+   - Small node sets (<100): ~1/3 of nodes connected
+
+2. Performance techniques:
+   - Single buffer geometry for all connections of each type
+   - Additive blending for improved visual effect
+   - Transparent materials with low opacity
+   - Separate container for pulse lines
+   - Automatic cleanup of expired pulse animations
+
+VISUAL EFFECT:
+- Created a chaotic, glowing web appearance
+- Random transaction pulses create a sense of activity
+- Connection opacity low enough to prevent visual clutter
+- Maintains smooth camera movement and navigation
+
+FUTURE IMPROVEMENTS:
+- Could implement custom shaders for more efficient pulse animations
+- Add variable line thickness based on transaction volume
+- Implement data-driven connections based on actual blockchain transactions
+- Add options to toggle connection visibility
