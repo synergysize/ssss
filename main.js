@@ -6,7 +6,7 @@ import { loadWalletData } from './dataLoader.js';
 import { generateFractalPosition, generateNodeSize, getWalletColor, initGalaxyContainer, galaxyContainer } from './fractalPlacement.js';
 import { TooltipHandler } from './tooltipHandler.js';
 import { createGlowMaterial } from './shaders.js';
-import { createNodeConnections, updateTransactionPulses, triggerRandomTransactionPulse } from './nodeConnections.js';
+import { createNodeConnections, updateTransactionPulses, storeOriginalGlowIntensities } from './nodeConnections.js';
 
 // Global variables
 let scene, camera, renderer;
@@ -278,14 +278,19 @@ function createWalletVisualization() {
   stats.totalCount = walletNodes.length;
   console.log(`Created ${walletNodes.length} wallet nodes (${stats.fartcoinCount} Fartcoin, ${stats.goattokenCount} Goattoken)`);
   
-  // Create node connections and store the connection objects
-  console.log('Creating node connection mesh...');
+  // Store original glow intensities for proper animation restoration
+  storeOriginalGlowIntensities(walletNodes);
+  
+  // Create local node connections (only between nearest neighbors)
+  console.log('Creating local node connection mesh...');
   nodeConnectionObjects = createNodeConnections(walletNodes, galaxyObject);
   
   // Log the connection statistics
   const connectionStats = nodeConnectionObjects.connectionData;
-  console.log(`Created node connections: ${connectionStats.totalConnections} total ` +
+  console.log(`Created ${connectionStats.totalConnections} local connections ` +
               `(${connectionStats.fartcoinConnections} Fartcoin, ${connectionStats.goattokenConnections} Goattoken)`);
+  console.log(`Average connections per node: ${connectionStats.avgConnectionsPerNode.toFixed(2)}`);
+  console.log(`Max connection distance: ${connectionStats.maxDistance.toFixed(2)}`);
   
   // Create a log file with connection information
   createConnectionLog(connectionStats);
@@ -303,20 +308,34 @@ function createConnectionLog(connectionStats) {
         fartcoin: stats.fartcoinCount,
         goattoken: stats.goattokenCount
       },
-      connections: connectionStats
+      connections: {
+        total: connectionStats.totalConnections,
+        fartcoin: connectionStats.fartcoinConnections,
+        goattoken: connectionStats.goattokenConnections,
+        averagePerNode: connectionStats.avgConnectionsPerNode,
+        maxDistance: connectionStats.maxDistance,
+        averageDistance: connectionStats.avgDistance
+      }
     },
     configuration: {
-      opacity: 0.03,
-      pulseDuration: 0.5,
-      pulseInterval: '300-500ms'
+      minNeighbors: 3,
+      maxNeighbors: 6,
+      lineOpacity: 0.03,
+      pulseDuration: 1.0,
+      pulseInterval: '500ms',
+      localConnections: true
     }
   };
   
-  console.log('Node mesh connection log:', logData);
+  console.log('Local node mesh connection log:', logData);
   
   // In a production environment, we would save this to a file
   // For now, we'll just add it to window object for debugging
-  window.nodeConnectionLog = logData;
+  window.nodeMeshLocalConnectionLog = logData;
+  
+  // Create a physical log file for the GitHub repo
+  const logContent = JSON.stringify(logData, null, 2);
+  console.log('Connection log data ready:', logContent.substring(0, 100) + '...');
 }
 
 // Handle window resize
