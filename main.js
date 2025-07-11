@@ -464,8 +464,14 @@ function animate() {
       
       // Synchronize core orb glow with breathing
       if (coreOrbGlow && coreOrbGlow.material.uniforms && coreOrbGlow.material.uniforms.intensity) {
-        const glowIntensity = 1.0 + Math.sin(t) * 0.3; // 30% intensity variation
+        const glowIntensity = 1.5 + Math.sin(t) * 0.5; // 50% intensity variation with higher base
         coreOrbGlow.material.uniforms.intensity.value = glowIntensity;
+        
+        // Also pulse the point light intensity
+        const lightChildren = scene.children.filter(child => child instanceof THREE.PointLight);
+        if (lightChildren.length > 0) {
+          lightChildren[0].intensity = 3 + Math.sin(t) * 1.5; // Vary between 1.5 and 4.5
+        }
       }
     }
     
@@ -495,14 +501,14 @@ function animate() {
 function createCoreOrb() {
   console.log('Creating central glowing orb...');
   
-  // Create the core orb geometry
-  const orbGeometry = new THREE.SphereGeometry(200, 32, 32);
+  // Create the core orb geometry with higher resolution for smoother appearance
+  const orbGeometry = new THREE.SphereGeometry(200, 64, 64);
   
-  // Create the core orb material with glow effect
+  // Create the core orb material with bright white glow
   const orbMaterial = new THREE.MeshBasicMaterial({
-    color: 0x88ccff, // Light blue color
-    transparent: true,
-    opacity: 0.6
+    color: 0xffffff, // Pure white color
+    emissive: 0xffffff,
+    emissiveIntensity: 1.0
   });
   
   // Create the core orb mesh
@@ -510,12 +516,17 @@ function createCoreOrb() {
   coreOrb.position.set(0, 0, 0);
   coreOrb.renderOrder = -1; // Ensure it renders behind other elements
   
-  // Create a larger, softer glow around the orb
+  // Add glow via point light
+  const glow = new THREE.PointLight(0xffffff, 3, 2000);
+  glow.position.set(0, 0, 0);
+  scene.add(glow);
+  
+  // Create a larger, softer glow around the orb using shader material
   const glowGeometry = new THREE.SphereGeometry(300, 32, 32);
   const glowMaterial = new THREE.ShaderMaterial({
     uniforms: {
-      glowColor: { value: new THREE.Color(0x88ccff) },
-      intensity: { value: 1.0 }
+      glowColor: { value: new THREE.Color(0xffffff) },
+      intensity: { value: 1.5 }
     },
     vertexShader: `
       varying vec3 vNormal;
@@ -538,7 +549,7 @@ function createCoreOrb() {
         float depth = 1.0 - min(1.0, length(vPosition) / 400.0);
         float glow = pow(0.9 - dot(vNormal, vec3(0, 0, 1.0)), 3.0) * intensity;
         
-        gl_FragColor = vec4(glowColor, 0.3) * glow * depth;
+        gl_FragColor = vec4(glowColor, 0.4) * glow * depth;
       }
     `,
     transparent: true,
@@ -553,7 +564,7 @@ function createCoreOrb() {
   // Add to scene
   scene.add(coreOrb);
   
-  console.log('Core orb created and added to scene');
+  console.log('Core orb created and added to scene with point light glow');
   return coreOrb;
 }
 

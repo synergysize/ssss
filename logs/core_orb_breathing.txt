@@ -1,5 +1,5 @@
 ========================================
-GLOWING CORE ORB & BREATHING MESH ANIMATION
+ENHANCED GLOWING CORE ORB & BREATHING MESH ANIMATION
 ========================================
 
 IMPLEMENTATION DETAILS:
@@ -10,61 +10,73 @@ IMPLEMENTATION DETAILS:
 - Position: Center of visualization (0, 0, 0)
 - Geometry: THREE.SphereGeometry
 - Radius: 200 units
-- Segments: 32 x 32 (high detail for smooth appearance)
+- Segments: 64 x 64 (increased for smoother appearance)
 
 2. CORE ORB MATERIAL PROPERTIES:
 -------------------------------
 - Base Material: MeshBasicMaterial
-- Color: Light Blue (0x88ccff)
-- Transparency: true
-- Opacity: 0.6
+- Color: Pure White (0xffffff)
+- Emissive: 0xffffff (glowing effect)
+- EmissiveIntensity: 1.0
 - Render Order: -1 (ensures rendering behind other elements)
 
-3. GLOW EFFECT IMPLEMENTATION:
------------------------------
+3. POINT LIGHT GLOW:
+------------------
+- Type: THREE.PointLight
+- Color: Pure White (0xffffff)
+- Intensity: 3.0 (with pulsation between 1.5 and 4.5)
+- Distance: 2000 units
+- Position: Center (0, 0, 0)
+
+4. ADDITIONAL GLOW EFFECT:
+------------------------
 - Secondary Sphere: SphereGeometry with radius 300
 - Material: Custom ShaderMaterial
 - Side: THREE.BackSide (renders on inside of sphere)
 - Blending: THREE.AdditiveBlending
 - Transparency: true
 - depthWrite: false
+- Higher opacity: 0.4 (increased from 0.3)
 
-4. SHADER DETAILS:
+5. SHADER DETAILS:
 ----------------
 - Vertex Shader: Standard position and normal calculations
 - Fragment Shader: Computes glow based on view angle and depth
 - Glow Calculation: pow(0.9 - dot(vNormal, vec3(0, 0, 1.0)), 3.0) * intensity
 - Depth Calculation: 1.0 - min(1.0, length(vPosition) / 400.0)
 - Uniforms: 
-  * glowColor: rgb(0x88ccff) - Light blue
-  * intensity: Dynamic value (1.0 + sin(t) * 0.3)
+  * glowColor: rgb(0xffffff) - Pure white
+  * intensity: Dynamic value (1.5 + sin(t) * 0.5) - Higher base and variation
 
-5. BREATHING ANIMATION FORMULA:
+6. BREATHING ANIMATION FORMULA:
 -----------------------------
 - Timing: t = performance.now() * 0.0005
 - Scale Calculation: scale = 1 + Math.sin(t) * 0.05
 - Applied To: Galaxy container object (entire node mesh)
 - Oscillation: 5% variation in scale (1.0 to 1.05)
-- Synchronization: Core orb glow intensity synced to same timing function
-- Glow Intensity: 1.0 + Math.sin(t) * 0.3 (30% variation)
+- Synchronization: Core orb glow and point light intensity synced to same timing function
+- Glow Intensity: 1.5 + Math.sin(t) * 0.5 (50% intensity variation with higher base)
+- Point Light Intensity: 3.0 + Math.sin(t) * 1.5 (50% intensity variation)
 
-6. PERFORMANCE CONSIDERATIONS:
+7. PERFORMANCE CONSIDERATIONS:
 ----------------------------
 - Single central object with efficient shader
-- Shared timing function for synchronization
-- Minimal performance impact
+- Point light adds minimal overhead with significant visual impact
+- Shared timing function for synchronization of all animations
 - Scale applied to node group rather than individual elements
 
-7. VISUAL EFFECT:
+8. VISUAL EFFECT:
 ---------------
-- Central blue orb suggests core of the blockchain network
-- Pulsating glow creates sense of energy and activity
+- Central white orb appears as a luminous, radiant core
+- The point light casts illumination onto nearby nodes
+- Pulsating light creates sense of energy and power
 - Breathing animation of the entire mesh creates a living, organic feel
-- Visual harmony between core pulsation and mesh breathing
+- Visual harmony between core pulsation, light intensity, and mesh breathing
 
-8. INTEGRATION:
+9. INTEGRATION:
 -------------
 - Core orb initialized after galaxy container
+- Point light added to scene directly
 - Breathing animation applied in main animation loop
 - Render order ensures proper layering
 - Camera and controls remain unaffected
