@@ -31,6 +31,10 @@ let stats = {
 // Node connection variables
 let nodeConnectionObjects = null;
 
+// Core orb variables
+let coreOrb = null;
+let coreOrbGlow = null;
+
 // Initialize the application
 async function init() {
   console.log('Initializing Fractal Wallet Visualization');
@@ -67,6 +71,9 @@ async function init() {
   // Initialize the galaxy container
   galaxyObject = initGalaxyContainer();
   scene.add(galaxyObject);
+  
+  // Create glowing core orb at the center
+  createCoreOrb();
   
   // Initialize controls
   initControls();
@@ -449,6 +456,17 @@ function animate() {
       // Add parallax spin effect with matched rotation speeds for Y and Z axes
       galaxyObject.rotation.y += baseRotationSpeed * 2.5; // 0.0005
       galaxyObject.rotation.z += baseRotationSpeed * 2.5; // 0.0005 (increased from 0.0003)
+      
+      // Apply breathing animation to the entire mesh
+      const t = performance.now() * 0.0005;
+      const scale = 1 + Math.sin(t) * 0.05; // 5% breathing effect
+      galaxyObject.scale.set(scale, scale, scale);
+      
+      // Synchronize core orb glow with breathing
+      if (coreOrbGlow && coreOrbGlow.material.uniforms && coreOrbGlow.material.uniforms.intensity) {
+        const glowIntensity = 1.0 + Math.sin(t) * 0.3; // 30% intensity variation
+        coreOrbGlow.material.uniforms.intensity.value = glowIntensity;
+      }
     }
     
     // Animate the glow effect
@@ -471,6 +489,72 @@ function animate() {
     // Render the scene
     renderer.render(scene, camera);
   }
+}
+
+// Create a glowing core orb at the center of the visualization
+function createCoreOrb() {
+  console.log('Creating central glowing orb...');
+  
+  // Create the core orb geometry
+  const orbGeometry = new THREE.SphereGeometry(200, 32, 32);
+  
+  // Create the core orb material with glow effect
+  const orbMaterial = new THREE.MeshBasicMaterial({
+    color: 0x88ccff, // Light blue color
+    transparent: true,
+    opacity: 0.6
+  });
+  
+  // Create the core orb mesh
+  coreOrb = new THREE.Mesh(orbGeometry, orbMaterial);
+  coreOrb.position.set(0, 0, 0);
+  coreOrb.renderOrder = -1; // Ensure it renders behind other elements
+  
+  // Create a larger, softer glow around the orb
+  const glowGeometry = new THREE.SphereGeometry(300, 32, 32);
+  const glowMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      glowColor: { value: new THREE.Color(0x88ccff) },
+      intensity: { value: 1.0 }
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 glowColor;
+      uniform float intensity;
+      
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      
+      void main() {
+        float depth = 1.0 - min(1.0, length(vPosition) / 400.0);
+        float glow = pow(0.9 - dot(vNormal, vec3(0, 0, 1.0)), 3.0) * intensity;
+        
+        gl_FragColor = vec4(glowColor, 0.3) * glow * depth;
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending
+  });
+  
+  coreOrbGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+  coreOrb.add(coreOrbGlow);
+  
+  // Add to scene
+  scene.add(coreOrb);
+  
+  console.log('Core orb created and added to scene');
+  return coreOrb;
 }
 
 // Start the application when the page loads
