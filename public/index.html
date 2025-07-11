@@ -129,27 +129,59 @@
       font-size: 14px;
       color: white;
       z-index: 10;
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      min-width: 300px;
+    }
+    
+    #contract-value {
+      color: #88ccff;
+    }
+    
+    /* Countdown Overlay Styles */
+    #countdown-overlay {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Arial', sans-serif;
+      font-size: 60px;
+      font-weight: bold;
+      color: #ff2d2d; /* Bright red */
+      text-align: center;
+      z-index: 1000;
+      text-shadow: 0 0 15px rgba(255, 45, 45, 0.8), 0 0 10px rgba(255, 45, 45, 0.6), 0 0 5px rgba(255, 45, 45, 0.4), 0 2px 4px rgba(0, 0, 0, 0.8);
+      display: none;
+      user-select: none;
+      pointer-events: none;
+    }
+    
+    /* Activation Prompt */
+    #activation-prompt {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Arial', sans-serif;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      text-align: center;
+      z-index: 1000;
+      display: none;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 20px rgba(0, 100, 255, 0.5);
     }
   </style>
 </head>
 <body>
-  <div id="info">
-    <div class="legend">
-      <div class="legend-item">
-        <span class="color-box fartcoin"></span>
-        <span>💨 Wallets</span>
-      </div>
-      <div class="legend-item">
-        <span class="color-box goattoken"></span>
-        <span>🐐 Wallets</span>
-      </div>
-    </div>
-    <div id="stats">
-      <div>Total Nodes: <span id="node-count">2000</span></div>
-      <div>💨: <span id="fartcoin-count">1000</span></div>
-      <div>🐐: <span id="goattoken-count">1000</span></div>
-    </div>
-  </div>
+  <!-- Legend box removed as requested -->
 
   <div id="pause-indicator">PAUSED. PRESS ESC TO UNPAUSE</div>
   
@@ -165,7 +197,17 @@
     <div class="tooltip-total">Total Value: 0</div>
   </div>
   
-  <div id="contract-address">Fractal Wallet Visualization</div>
+  <div id="contract-address">
+    Fractal Wallet Visualization
+    <hr style="border: 0.5px solid rgba(255, 255, 255, 0.3); margin: 5px 0;">
+    Contract: <span id="contract-value">[insert contract address here]</span>
+  </div>
+  
+  <!-- Countdown Overlay -->
+  <div id="countdown-overlay">00:00</div>
+  
+  <!-- Activation Prompt -->
+  <div id="activation-prompt">Press E to Activate</div>
   
   <script type="importmap">
     {

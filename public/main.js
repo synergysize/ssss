@@ -745,6 +745,214 @@ initFireworks(scene);
 const walletTooltip = new WalletTooltip(scene, camera);
 console.log('3D wallet tooltip initialized');
 
+// Countdown functionality
+// Get DOM elements
+const countdownOverlay = document.getElementById('countdown-overlay');
+const activationPrompt = document.getElementById('activation-prompt');
+
+// Countdown state
+let countdownActive = false;
+let countdownEndTime = 0;
+let nearCentralOrb = false;
+let facingCentralOrb = false;
+
+// Load countdown state from localStorage
+function loadCountdownState() {
+  const savedEndTime = localStorage.getItem('countdownEndTime');
+  if (savedEndTime) {
+    const endTime = parseInt(savedEndTime, 10);
+    // Only restore if the end time is in the future
+    if (endTime > Date.now()) {
+      countdownEndTime = endTime;
+      countdownActive = true;
+      showCountdown();
+      console.log(`Restored countdown from localStorage, ending at: ${new Date(countdownEndTime).toISOString()}`);
+    } else {
+      // Clear expired countdown
+      localStorage.removeItem('countdownEndTime');
+      console.log('Cleared expired countdown from localStorage');
+    }
+  }
+}
+
+// Save countdown state to localStorage
+function saveCountdownState() {
+  if (countdownActive) {
+    localStorage.setItem('countdownEndTime', countdownEndTime.toString());
+    console.log(`Saved countdown to localStorage, ending at: ${new Date(countdownEndTime).toISOString()}`);
+  } else {
+    localStorage.removeItem('countdownEndTime');
+    console.log('Removed countdown from localStorage');
+  }
+}
+
+// Format time as mm:ss
+function formatTime(milliseconds) {
+  if (milliseconds <= 0) return "00:00";
+  
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Show countdown overlay
+function showCountdown() {
+  if (countdownOverlay) {
+    countdownOverlay.style.display = 'block';
+    console.log('Countdown overlay shown');
+  }
+}
+
+// Hide countdown overlay
+function hideCountdown() {
+  if (countdownOverlay) {
+    countdownOverlay.style.display = 'none';
+    console.log('Countdown overlay hidden');
+  }
+}
+
+// Update countdown display
+function updateCountdown() {
+  if (!countdownActive) return;
+  
+  const remainingTime = countdownEndTime - Date.now();
+  
+  if (remainingTime <= 0) {
+    // Countdown finished
+    countdownActive = false;
+    hideCountdown();
+    saveCountdownState();
+    console.log('Countdown finished');
+    return;
+  }
+  
+  // Update display
+  if (countdownOverlay) {
+    countdownOverlay.textContent = formatTime(remainingTime);
+  }
+}
+
+// Start countdown (2 minutes from now)
+function startCountdown() {
+  if (countdownActive) {
+    console.log('Countdown already active, ignoring start request');
+    return;
+  }
+  
+  // Set end time to 2 minutes from now
+  countdownEndTime = Date.now() + 2 * 60 * 1000;
+  countdownActive = true;
+  
+  // Show countdown and save state
+  showCountdown();
+  saveCountdownState();
+  
+  console.log(`Started countdown, ending at: ${new Date(countdownEndTime).toISOString()}`);
+}
+
+// Show activation prompt
+function showActivationPrompt() {
+  if (activationPrompt) {
+    activationPrompt.style.display = 'block';
+    console.log('Activation prompt shown');
+  }
+}
+
+// Hide activation prompt
+function hideActivationPrompt() {
+  if (activationPrompt) {
+    activationPrompt.style.display = 'none';
+    console.log('Activation prompt hidden');
+  }
+}
+
+// Check if camera is facing the central orb
+function isFacingCentralOrb(cameraPosition, centralOrbPosition) {
+  // Get camera forward direction
+  const cameraDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
+  
+  // Get direction to central orb
+  const toCentralOrb = new THREE.Vector3().subVectors(centralOrbPosition, cameraPosition).normalize();
+  
+  // Calculate dot product (measures similarity of direction)
+  const dotProduct = cameraDirection.dot(toCentralOrb);
+  
+  // If dot product > 0.9, camera is roughly facing the orb (within ~25 degrees)
+  return dotProduct > 0.9;
+}
+
+// Function to find the central white orb (wallet holding both tokens)
+function findCentralWhiteOrb() {
+  // First try to find in the shared wallets group (white orbs)
+  const sharedGroup = scene.getObjectByName('sharedWallets');
+  
+  if (sharedGroup && sharedGroup.children.length > 0) {
+    // Find the central-most white orb (closest to origin)
+    let closestDistance = Infinity;
+    let centralOrb = null;
+    
+    sharedGroup.children.forEach(sprite => {
+      if (sprite && sprite.position) {
+        const distanceToCenter = sprite.position.length();
+        if (distanceToCenter < closestDistance) {
+          closestDistance = distanceToCenter;
+          centralOrb = sprite;
+        }
+      }
+    });
+    
+    if (centralOrb) {
+      console.log('Found central white orb at:', centralOrb.position);
+      return centralOrb;
+    }
+  }
+  
+  console.warn('Could not find central white orb');
+  return null;
+}
+
+// Check proximity to central orb and facing direction
+function checkCentralOrbProximity() {
+  // Find the central white orb if we haven't already
+  const centralOrb = findCentralWhiteOrb();
+  if (!centralOrb) return;
+  
+  // Calculate distance to central orb
+  const distance = camera.position.distanceTo(centralOrb.position);
+  
+  // Check if within range (10 units)
+  const withinRange = distance < 10;
+  
+  // Check if facing the orb
+  const isFacing = isFacingCentralOrb(camera.position, centralOrb.position);
+  
+  // Update state
+  nearCentralOrb = withinRange;
+  facingCentralOrb = isFacing;
+  
+  // Show/hide activation prompt based on proximity and facing
+  if (withinRange && isFacing && !countdownActive) {
+    showActivationPrompt();
+  } else {
+    hideActivationPrompt();
+  }
+}
+
+// Handle 'E' key press
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'e' || e.key === 'E') {
+    if (nearCentralOrb && facingCentralOrb && !countdownActive) {
+      startCountdown();
+      hideActivationPrompt();
+    }
+  }
+});
+
+// Load countdown state on startup
+loadCountdownState();
+
 // Initial camera setup - increased distance for better view of larger visualization
 camera.position.set(0, 0, 5000); // Increased from 3000 to 5000 to fit the larger visualization
 camera.lookAt(0, 0, 0);
@@ -1169,9 +1377,9 @@ if (sharedPoints.length > 0 && fartcoinPoints.length > 0 && goatTokenPoints.leng
 const controlsElement = document.getElementById('controls');
 if (controlsElement) {
   if (controlType === 'Fly') {
-    controlsElement.innerHTML = 'WASD to move, drag mouse to look around<br>HOLD LEFT SHIFT to activate jetpack boost';
+    controlsElement.innerHTML = 'WASD to move, drag mouse to look around<br>HOLD LEFT SHIFT to activate jetpack boost<br>Press E near central orb to activate countdown';
   } else {
-    controlsElement.innerHTML = 'Drag to rotate, pinch to zoom';
+    controlsElement.innerHTML = 'Drag to rotate, pinch to zoom<br>Press E near central orb to activate countdown';
   }
 }
 
@@ -1789,6 +1997,10 @@ function animate() {
   
   // Update spiral disc animation
   updateDisc(delta);
+  
+  // Check proximity to central orb and update countdown
+  checkCentralOrbProximity();
+  updateCountdown();
   
     // Render the scene
     renderer.render(scene, camera);
