@@ -38,7 +38,11 @@ let showingInteractionPrompt = false;
 let confirmationDialogVisible = false;
 let soundEffects = {
   fartcoin: [],
-  goattoken: []
+  goattoken: [],
+  ui: {
+    confirm: new Audio('data:audio/wav;base64,UklGRl4EAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToEAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=='),
+    cancel: new Audio('data:audio/wav;base64,UklGRnIEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU4EAACBgIF/gn2Cf4B+gH9+gH2Bfn+AfX+Afn+BfoF+gH2AfH+BgIB/f4B/fn+AgICAgH+Af35/gIGAgH9/f39/gICBgIB/f39/gICBgYCAf35/gICBgYGAgH9+f4CBgYGBgH9/fn+AgYGBgYB/fn+AgIGBgYGAf35/gIGBgYGBgH5+f4CBgYKBgYB+fn+AgYKCgYGAfn5/gYGCgoGBgH5+f4GCgoKBgX9+fn+BgoKCgYF/fn5/gYKCgoKBf35+f4GCg4KCgX9+fn+CgoODgoF/fn5/goODg4KBf35+f4KDg4OCgX5+fn+Cg4ODgoF+fn6AgoOEg4KBfn5+gIKDhIOCgX5+foCChIOEg4F+fX6AgoSEhIOBfn1+gIOEhIODgX59foCDhISEg4F+fX6Ag4SEhIOBfn1+gIOFhISDgX59foCDhYWEg4F9fX6Ag4WFhIOBfX19gISFhYSEgX19fYCEhYWEhIF9fX2AhIWFhYSBfX19gISFhoWEgX18fYCEhoaFhIF9fH2BhIaGhYSBfXx9gYWGhoWEgXx8fYGFhoaFhIF8fH2BhYaGhoWBfHx8gYWGh4aFgXx8fIGFh4eGhYF8e3yBhoeHhoWBfHt8gYaHh4aGgXx7fIGGh4eHhoF7e3yBhoeIh4aBe3t7goaHiIeGgXt7e4KGiIiHhoF7enuCh4iIh4aBe3p7goaIiIeHgXp6e4KHiIiIh4F6enuCh4iJiIeBenp6goeIiYiHgXp6eoKHiYmIh4F6eXqCh4mJiIiBenl6g4eJiYmIgXl5eoOIiYmJiIF5eXqDiImKiYiBeXl5g4iKiomIgXl5eYOIioqJiIF5eHmDiIqKiYmBeHh5g4mKiomJgXh4eYOJioqKiYF4eHiEiYqLiomBeHd4hImKi4qJgXh3eISJi4uKiYF3d3iEiYuLiomBd3d4hImLi4qKgXd3d4SJi4yLioF3dneEiouMi4qBdnZ3hIqLjIuKgXZ2d4WKjIyLioF2dnaFioyMi4qBdnV2hYqMjIyLgXV1doWKjI2Mi4F1dXaFi4yNjIuBdXV1hYuMjYyLgXV1dYWLjY2Mi4F0dHWFi42NjIyBdHR1houNjY2MgXR0dIaLjY6NjIF0c3SGi46OjYyBc3N0houOjo2MgXNzdIaMjo6NjIFzc3OGjI6OjYyBc3JzhoufpJyanHx3dm+DgI2Yl5KMg31+eXR/eIGIjIyJhoJ+fHt4e3+Bh4qNjYuIgn98eXZ4en+Cio+RkI2Hg357dnR0d32DipGUlZOPiIJ9end1dHd8gYiQlZeWko2Hgn15dnV1eH2Cio+UlpeUkIqEgHt4dnZ3e3+Fio+Tl5iWkY2Hgn16eHd4e36DiY6Tl5iXlI+JhIB7eXh3eXt/homOkpaYl5WQi4WAfHp4eHl7foSIjZGVmJiWko2Hgn17eXh5e32BiY2RlZiYl5SQioWBfXt5eXp8f4WJjpKWmJiXlI6JhIF9e3l5ent+g4iNkZWYmJeVkIuGgn57enh6e32BiY2RlZiZmJaRjYiFgX17enh6e36CiI2RlZiZmJaSjoiGgn58enh5e32BiIyQlJiZmJaSj4mGgn58enh5e32AiIyQlJiZmZeUkIqHg398enh5enwAAABJTkZPSUNSRAsAAAAyMDAxLTAxLTIzAABJRU5HCwAAAFRlZCBCcm9va3MAAElTRlQMAAAAU291bmQgRm9yZ2UAAElOQU0NAAAAU2NpIEZpIFRvbmUAAABJQVJUDAAAAFRlZCBCcm9va3MAAAA=')
+  }
 };
 
 // Post-processing variables
@@ -63,7 +67,7 @@ function preloadSoundEffects() {
   // Preload fartcoin sound effects
   for (let i = 1; i <= 5; i++) {
     const paddedNum = i.toString().padStart(3, '0');
-    const audio = new Audio(`public/sound/fart-${paddedNum}.mp3`);
+    const audio = new Audio(`fart-${paddedNum}.mp3`);
     audio.load();
     soundEffects.fartcoin.push(audio);
   }
@@ -71,7 +75,7 @@ function preloadSoundEffects() {
   // Preload goattoken sound effects
   for (let i = 1; i <= 5; i++) {
     const paddedNum = i.toString().padStart(3, '0');
-    const audio = new Audio(`public/sound/bahhh-${paddedNum}.mp3`);
+    const audio = new Audio(`bahhh-${paddedNum}.mp3`);
     audio.load();
     soundEffects.goattoken.push(audio);
   }
@@ -457,8 +461,9 @@ function checkForWalletInteraction(intersects) {
   const intersectedObject = intersects[0].object;
   const wallet = intersectedObject.userData.wallet;
   
-  // Skip center orb interaction
-  if (intersectedObject === coreOrb || intersectedObject.parent === coreOrb) {
+  // Skip center orb interaction or if wallet data is missing
+  if (!wallet || !wallet.Account || 
+      (coreOrb && (intersectedObject === coreOrb || (intersectedObject.parent && intersectedObject.parent === coreOrb)))) {
     if (interactableWallet) {
       interactableWallet = null;
       hideInteractionPrompt();
@@ -500,16 +505,18 @@ function showInteractionPrompt() {
     promptElement = document.createElement('div');
     promptElement.id = 'interaction-prompt';
     promptElement.style.position = 'absolute';
-    promptElement.style.top = '55%'; // Position below center to avoid tooltip overlap
+    promptElement.style.top = '60%'; // Well below center to avoid tooltip overlap
     promptElement.style.left = '50%';
     promptElement.style.transform = 'translate(-50%, 0)';
     promptElement.style.color = 'white';
-    promptElement.style.fontSize = '20px';
+    promptElement.style.fontSize = '24px';
     promptElement.style.fontWeight = 'bold';
-    promptElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    promptElement.style.padding = '8px 16px';
+    promptElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    promptElement.style.padding = '10px 20px';
     promptElement.style.borderRadius = '5px';
     promptElement.style.zIndex = '1000';
+    promptElement.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.5)';
+    promptElement.style.letterSpacing = '1px';
     document.body.appendChild(promptElement);
   }
   
@@ -553,8 +560,10 @@ function showConfirmationDialog(wallet) {
   
   // Set the content of the dialog using the exact format requested
   dialogElement.innerHTML = `
-    <p style="font-size: 16px; margin-bottom: 15px;">
-      You are about to open a pop-up to https://solscan.io/account/${wallet.Account}. Confirm? (Y/N)
+    <p style="font-size: 18px; margin: 0; line-height: 1.5;">
+      You are about to open a pop-up to:<br>
+      <span style="font-family: monospace; color: #8af; word-break: break-all;">https://solscan.io/account/${wallet.Account}</span><br>
+      Confirm? (<span style="color: #4f4; font-weight: bold;">Y</span>/<span style="color: #f44; font-weight: bold;">N</span>)
     </p>
   `;
   
@@ -570,16 +579,31 @@ function hideConfirmationDialog() {
     dialogElement.style.display = 'none';
   }
   confirmationDialogVisible = false;
+  
+  // Check if we should restore the interaction prompt
+  if (interactableWallet) {
+    showInteractionPrompt();
+  }
 }
 
 // Open Solscan URL
 function openSolscanUrl(walletAddress) {
+  // Play confirm sound
+  soundEffects.ui.confirm.currentTime = 0;
+  soundEffects.ui.confirm.play().catch(err => console.error('Error playing confirm sound:', err));
+  
+  // Open URL in new tab
   const url = `https://solscan.io/account/${walletAddress}`;
   window.open(url, '_blank');
 }
 
 // Handle keyboard input
 function onKeyDown(event) {
+  // Prevent default behaviors for the keys we're handling
+  if (['Escape', 'e', 'E', 'y', 'Y', 'n', 'N'].includes(event.key)) {
+    event.preventDefault();
+  }
+  
   // Toggle pause with Escape key
   if (event.key === 'Escape') {
     // If confirmation dialog is open, close it
@@ -596,28 +620,41 @@ function onKeyDown(event) {
     return;
   }
   
+  // Don't process other keys if paused
+  if (paused) return;
+  
   // Handle interaction key (E)
   if (event.key === 'e' || event.key === 'E') {
-    if (interactableWallet && !confirmationDialogVisible) {
+    if (interactableWallet && !confirmationDialogVisible && showingInteractionPrompt) {
+      console.log('E pressed - interacting with wallet:', interactableWallet.type, interactableWallet.Account);
+      
       // Play sound effect
       playWalletSound(interactableWallet.type);
       
       // Show confirmation dialog
       showConfirmationDialog(interactableWallet);
+      
+      // Hide the interaction prompt while dialog is visible
+      hideInteractionPrompt();
     }
     return;
   }
   
   // Handle confirmation dialog responses
-  if (confirmationDialogVisible) {
+  if (confirmationDialogVisible && interactableWallet) {
     // Confirm (Y key)
     if (event.key === 'y' || event.key === 'Y') {
+      console.log('Opening Solscan URL for wallet:', interactableWallet.Account);
       openSolscanUrl(interactableWallet.Account);
       hideConfirmationDialog();
     }
     
     // Cancel (N key)
     if (event.key === 'n' || event.key === 'N') {
+      console.log('Canceling Solscan URL open');
+      // Play cancel sound
+      soundEffects.ui.cancel.currentTime = 0;
+      soundEffects.ui.cancel.play().catch(err => console.error('Error playing cancel sound:', err));
       hideConfirmationDialog();
     }
   }
