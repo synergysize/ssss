@@ -11,13 +11,12 @@
       background-color: #000;
       font-family: Arial, sans-serif;
     }
+    
     canvas {
       display: block;
       position: absolute;
       top: 0;
       left: 0;
-      z-index: 0;
-      cursor: default !important;
     }
     
     #info {
@@ -83,12 +82,14 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
       box-shadow: 0 0 10px rgba(0, 100, 255, 0.5);
     }
+    
     .tooltip-title {
       font-weight: bold;
       margin-bottom: 5px;
       font-size: 14px;
       color: #88ccff;
     }
+    
     .tooltip-address {
       font-family: monospace;
       font-size: 12px;
@@ -96,20 +97,25 @@
       color: #aaccff;
       word-break: break-all;
     }
+    
     .tooltip-holdings {
       margin-bottom: 5px;
     }
+    
     .tooltip-fartcoin {
       color: #8A2BE2; /* Purple for Fartcoin */
     }
+    
     .tooltip-goat {
       color: #FFA500; /* Orange for Goattoken */
     }
+    
     .tooltip-total {
       margin-top: 8px;
       font-weight: bold;
       color: #ffffff;
     }
+    
     #pause-indicator {
       position: absolute;
       top: 50%;
@@ -121,36 +127,20 @@
       z-index: 100;
     }
     
-    #interaction-prompt {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      font-weight: bold;
-      color: white;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px 20px;
-      border-radius: 5px;
-      display: none;
-      z-index: 1000;
-      animation: pulse 1.5s infinite;
-    }
-    
-    @keyframes pulse {
-      0% { opacity: 0.5; }
-      50% { opacity: 1; }
-      100% { opacity: 0.5; }
-    }
-    #contract-address {
+    #debug-panel {
       position: absolute;
       top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: monospace;
-      font-size: 14px;
+      right: 20px;
       color: white;
-      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: monospace;
+      max-height: 200px;
+      overflow-y: auto;
+      max-width: 350px;
+      z-index: 100;
     }
   </style>
 </head>
@@ -187,17 +177,15 @@
     <div class="tooltip-total">Total Value: 0</div>
   </div>
   
-  <div id="contract-address">Fractal Wallet Visualization</div>
+  <div id="debug-panel"></div>
   
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
-        "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js",
-        "three/examples/jsm/controls/FlyControls.js": "https://unpkg.com/three@0.150.1/examples/jsm/controls/FlyControls.js"
-      }
-    }
-  </script>
-  <script type="module" src="main.js"></script>
+  <!-- Load Three.js directly -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js"></script>
+  
+  <!-- Load orbit controls -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Our application script -->
+  <script src="app.js"></script>
 </body>
 </html>
