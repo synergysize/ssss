@@ -2,6 +2,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { loadWalletData } from './dataLoader.js';
 import { generateFractalPosition, generateNodeSize, getWalletColor, initGalaxyContainer, galaxyContainer } from './fractalPlacement.js';
 import { TooltipHandler } from './tooltipHandler.js';
@@ -28,12 +32,20 @@ let stats = {
   totalCount: 0
 };
 
+// Post-processing variables
+let composer;
+let bloomPass;
+const BLOOM_SCENE = 1;
+const bloomLayer = new THREE.Layers();
+bloomLayer.set(BLOOM_SCENE);
+
 // Node connection variables
 let nodeConnectionObjects = null;
 
 // Core orb variables
 let coreOrb = null;
 let coreOrbGlow = null;
+let orbLight = null;
 
 // Initialize the application
 async function init() {
@@ -55,6 +67,22 @@ async function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   document.body.appendChild(renderer.domElement);
+  
+  // Setup post-processing with bloom effect
+  const renderScene = new RenderPass(scene, camera);
+  
+  // Add UnrealBloomPass for the glowing effect
+  bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.5,    // strength
+    0.4,    // radius
+    0.1     // threshold
+  );
+  
+  // Create composer for post-processing
+  composer = new EffectComposer(renderer);
+  composer.addPass(renderScene);
+  composer.addPass(bloomPass);
   
   // Add ambient light
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -349,7 +377,13 @@ function createConnectionLog(connectionStats) {
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  
+  // Update renderer and composer sizes
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+  
+  // Update bloom pass resolution
+  bloomPass.resolution.set(window.innerWidth, window.innerHeight);
 }
 
 // This function is replaced by the updated onMouseMove function below
@@ -464,13 +498,18 @@ function animate() {
       
       // Synchronize core orb glow with breathing
       if (coreOrbGlow && coreOrbGlow.material.uniforms && coreOrbGlow.material.uniforms.intensity) {
-        const glowIntensity = 1.5 + Math.sin(t) * 0.5; // 50% intensity variation with higher base
+        const glowIntensity = 2.0 + Math.sin(t) * 0.8; // Increased intensity variation
         coreOrbGlow.material.uniforms.intensity.value = glowIntensity;
         
-        // Also pulse the point light intensity
+        // Pulse the point light intensity with higher values
         const lightChildren = scene.children.filter(child => child instanceof THREE.PointLight);
         if (lightChildren.length > 0) {
-          lightChildren[0].intensity = 3 + Math.sin(t) * 1.5; // Vary between 1.5 and 4.5
+          lightChildren[0].intensity = 10 + Math.sin(t) * 5; // Vary between 5 and 15 for stronger effect
+        }
+        
+        // Also pulse the emissive intensity if available
+        if (coreOrb && coreOrb.material && coreOrb.material.emissiveIntensity !== undefined) {
+          coreOrb.material.emissiveIntensity = 5 + Math.sin(t) * 2; // Vary between 3 and 7
         }
       }
     }
@@ -492,8 +531,8 @@ function animate() {
       updateTransactionPulses();
     }
     
-    // Render the scene
-    renderer.render(scene, camera);
+    // Render the scene with post-processing effects
+    composer.render();
   }
 }
 
@@ -501,32 +540,34 @@ function animate() {
 function createCoreOrb() {
   console.log('Creating central glowing orb...');
   
-  // Create the core orb geometry with higher resolution for smoother appearance
+  // Create the core orb geometry with high resolution for perfect spherical appearance
   const orbGeometry = new THREE.SphereGeometry(200, 64, 64);
   
-  // Create the core orb material with bright white glow
-  const orbMaterial = new THREE.MeshBasicMaterial({
+  // Create the core orb material with MeshStandardMaterial for more realistic lighting
+  const orbMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff, // Pure white color
     emissive: 0xffffff,
-    emissiveIntensity: 1.0
+    emissiveIntensity: 5,
+    roughness: 0.2,
+    metalness: 1.0,
   });
   
   // Create the core orb mesh
   coreOrb = new THREE.Mesh(orbGeometry, orbMaterial);
   coreOrb.position.set(0, 0, 0);
-  coreOrb.renderOrder = -1; // Ensure it renders behind other elements
+  coreOrb.layers.enable(BLOOM_SCENE); // Set the bloom layer for the orb
   
-  // Add glow via point light
-  const glow = new THREE.PointLight(0xffffff, 3, 2000);
-  glow.position.set(0, 0, 0);
-  scene.add(glow);
+  // Add strong point light at the center to enhance glow
+  orbLight = new THREE.PointLight(0xffffff, 10, 4000);
+  orbLight.position.set(0, 0, 0);
+  scene.add(orbLight);
   
   // Create a larger, softer glow around the orb using shader material
   const glowGeometry = new THREE.SphereGeometry(300, 32, 32);
   const glowMaterial = new THREE.ShaderMaterial({
     uniforms: {
       glowColor: { value: new THREE.Color(0xffffff) },
-      intensity: { value: 1.5 }
+      intensity: { value: 2.0 }
     },
     vertexShader: `
       varying vec3 vNormal;
@@ -547,9 +588,9 @@ function createCoreOrb() {
       
       void main() {
         float depth = 1.0 - min(1.0, length(vPosition) / 400.0);
-        float glow = pow(0.9 - dot(vNormal, vec3(0, 0, 1.0)), 3.0) * intensity;
+        float glow = pow(0.9 - dot(vNormal, vec3(0, 0, 1.0)), 4.0) * intensity;
         
-        gl_FragColor = vec4(glowColor, 0.4) * glow * depth;
+        gl_FragColor = vec4(glowColor, 0.5) * glow * depth;
       }
     `,
     transparent: true,
@@ -561,10 +602,14 @@ function createCoreOrb() {
   coreOrbGlow = new THREE.Mesh(glowGeometry, glowMaterial);
   coreOrb.add(coreOrbGlow);
   
+  // Add ambient light to ensure the orb is always visible
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  coreOrb.add(ambientLight);
+  
   // Add to scene
   scene.add(coreOrb);
   
-  console.log('Core orb created and added to scene with point light glow');
+  console.log('Core orb created and added to scene with advanced lighting and materials');
   return coreOrb;
 }
 

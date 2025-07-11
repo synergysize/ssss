@@ -1,0 +1,80 @@
+========================================
+ENHANCED RADIANT CORE ORB IMPLEMENTATION
+========================================
+
+IMPLEMENTATION DETAILS:
+-----------------------
+
+1. CORE ORB SPECIFICATIONS:
+---------------------------
+- Position: Center of visualization (0, 0, 0)
+- Geometry: THREE.SphereGeometry with high resolution (64x64 segments)
+- Radius: 200 units
+- Material: MeshStandardMaterial (replaces MeshBasicMaterial)
+- Rendering: Added to bloom layer for post-processing
+
+2. MATERIAL PROPERTIES:
+---------------------
+- Base Color: 0xffffff (Pure white)
+- Emissive: 0xffffff
+- Emissive Intensity: 5.0 (dynamic: 3.0-7.0)
+- Roughness: 0.2 (low for high reflectivity)
+- Metalness: 1.0 (maximum for proper reflections)
+
+3. POINT LIGHT ENHANCEMENT:
+------------------------
+- Type: THREE.PointLight
+- Color: 0xffffff (Pure white)
+- Base Intensity: 10.0 (dynamic: 5.0-15.0)
+- Range: 4000 units (increased from 2000)
+- Position: Centered at (0,0,0)
+
+4. ADDITIONAL GLOW EFFECTS:
+-------------------------
+- Outer Glow Sphere: 300 units radius
+- Custom Shader Material:
+  * Increased base intensity: 2.0
+  * Higher exponent in glow formula: 4.0 (was 3.0)
+  * Increased opacity: 0.5 (was 0.4)
+  * Improved depth calculation
+
+5. POST-PROCESSING IMPLEMENTATION:
+-------------------------------
+- Added THREE.js EffectComposer
+- Implemented UnrealBloomPass with parameters:
+  * Strength: 1.5
+  * Radius: 0.4
+  * Threshold: 0.1
+- Added core orb to special bloom layer (BLOOM_SCENE)
+- Modified rendering loop to use composer.render()
+
+6. ANIMATION ENHANCEMENTS:
+-----------------------
+- Synchronized pulsation across:
+  * Point light intensity (10 ± 5)
+  * Emissive intensity (5 ± 2)
+  * Shader glow intensity (2.0 ± 0.8)
+- Timing function: performance.now() * 0.0005
+- Compatible with existing galaxy breathing effect
+
+7. INTEGRATION IMPROVEMENTS:
+-------------------------
+- Updated window resize handler for proper post-processing scaling
+- Added ambient light within the orb group
+- Maintained core orb as focal point of visualization
+- Ensured camera and controls remain unaffected
+
+8. VISUAL OUTCOME:
+---------------
+- Three-dimensional sphere appearance
+- Strong emissive glow from the core
+- Light radiating outward onto nearby nodes
+- Dynamic pulsation resembling a star or energy source
+- Central focus point for the entire blockchain network
+
+9. TECHNICAL BENEFITS:
+-------------------
+- Improved visual quality using industry-standard techniques
+- Maintained good performance with optimized shader code
+- Better visual hierarchy with the orb as the clear focal point
+- More realistic lighting model and reflections
