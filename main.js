@@ -32,6 +32,15 @@ let stats = {
   totalCount: 0
 };
 
+// Node interaction variables
+let interactableWallet = null;
+let showingInteractionPrompt = false;
+let confirmationDialogVisible = false;
+let soundEffects = {
+  fartcoin: [],
+  goattoken: []
+};
+
 // Post-processing variables
 let composer;
 let bloomPass;
@@ -47,9 +56,55 @@ let coreOrb = null;
 let coreOrbGlow = null;
 let orbLight = null;
 
+// Preload sound effects
+function preloadSoundEffects() {
+  console.log('Preloading sound effects...');
+  
+  // Preload fartcoin sound effects
+  for (let i = 1; i <= 5; i++) {
+    const paddedNum = i.toString().padStart(3, '0');
+    const audio = new Audio(`sound/fart-${paddedNum}.mp3`);
+    audio.load();
+    soundEffects.fartcoin.push(audio);
+  }
+  
+  // Preload goattoken sound effects
+  for (let i = 1; i <= 5; i++) {
+    const paddedNum = i.toString().padStart(3, '0');
+    const audio = new Audio(`sound/bahhh-${paddedNum}.mp3`);
+    audio.load();
+    soundEffects.goattoken.push(audio);
+  }
+  
+  console.log(`Loaded ${soundEffects.fartcoin.length} fartcoin sounds and ${soundEffects.goattoken.length} goattoken sounds`);
+}
+
+// Play random sound based on wallet type
+function playWalletSound(walletType) {
+  if (!walletType) return;
+  
+  const sounds = walletType === 'fartcoin' ? soundEffects.fartcoin : soundEffects.goattoken;
+  if (sounds.length === 0) return;
+  
+  // Select a random sound effect
+  const randomIndex = Math.floor(Math.random() * sounds.length);
+  const sound = sounds[randomIndex];
+  
+  // Stop any currently playing instances of this sound
+  sound.currentTime = 0;
+  
+  // Play the sound
+  sound.play().catch(error => {
+    console.error('Error playing sound:', error);
+  });
+}
+
 // Initialize the application
 async function init() {
   console.log('Initializing Fractal Wallet Visualization');
+  
+  // Preload sound effects
+  preloadSoundEffects();
   
   // Create scene
   scene = new THREE.Scene();
@@ -388,20 +443,182 @@ function onWindowResize() {
 
 // This function is replaced by the updated onMouseMove function below
 
+// Check if a wallet is directly in front of the camera for interaction
+function checkForWalletInteraction(intersects) {
+  // Reset interaction state if we're not looking at any wallet
+  if (intersects.length === 0) {
+    if (interactableWallet) {
+      interactableWallet = null;
+      hideInteractionPrompt();
+    }
+    return;
+  }
+  
+  const intersectedObject = intersects[0].object;
+  const wallet = intersectedObject.userData.wallet;
+  
+  // Calculate dot product between camera direction and direction to wallet
+  // This checks if we're looking directly at the wallet
+  const cameraDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+  
+  const walletDirection = new THREE.Vector3();
+  walletDirection.subVectors(intersectedObject.position, camera.position).normalize();
+  
+  const dotProduct = cameraDirection.dot(walletDirection);
+  const distanceToWallet = camera.position.distanceTo(intersectedObject.position);
+  
+  // If we're looking directly at the wallet (dot product close to 1) and it's close enough
+  if (dotProduct > 0.95 && distanceToWallet < 1000) {
+    if (interactableWallet !== wallet) {
+      interactableWallet = wallet;
+      showInteractionPrompt();
+    }
+  } else {
+    if (interactableWallet) {
+      interactableWallet = null;
+      hideInteractionPrompt();
+    }
+  }
+}
+
+// Show the interaction prompt
+function showInteractionPrompt() {
+  if (showingInteractionPrompt) return;
+  
+  // Create the interaction prompt if it doesn't exist
+  let promptElement = document.getElementById('interaction-prompt');
+  if (!promptElement) {
+    promptElement = document.createElement('div');
+    promptElement.id = 'interaction-prompt';
+    promptElement.style.position = 'absolute';
+    promptElement.style.top = '50%';
+    promptElement.style.left = '50%';
+    promptElement.style.transform = 'translate(-50%, -50%)';
+    promptElement.style.color = 'white';
+    promptElement.style.fontSize = '24px';
+    promptElement.style.fontWeight = 'bold';
+    promptElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    promptElement.style.padding = '10px 20px';
+    promptElement.style.borderRadius = '5px';
+    promptElement.style.zIndex = '1000';
+    document.body.appendChild(promptElement);
+  }
+  
+  promptElement.textContent = 'Press E';
+  promptElement.style.display = 'block';
+  showingInteractionPrompt = true;
+}
+
+// Hide the interaction prompt
+function hideInteractionPrompt() {
+  if (!showingInteractionPrompt) return;
+  
+  const promptElement = document.getElementById('interaction-prompt');
+  if (promptElement) {
+    promptElement.style.display = 'none';
+  }
+  showingInteractionPrompt = false;
+}
+
+// Show confirmation dialog
+function showConfirmationDialog(wallet) {
+  // Create the confirmation dialog if it doesn't exist
+  let dialogElement = document.getElementById('confirmation-dialog');
+  if (!dialogElement) {
+    dialogElement = document.createElement('div');
+    dialogElement.id = 'confirmation-dialog';
+    dialogElement.style.position = 'absolute';
+    dialogElement.style.top = '50%';
+    dialogElement.style.left = '50%';
+    dialogElement.style.transform = 'translate(-50%, -50%)';
+    dialogElement.style.color = 'white';
+    dialogElement.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    dialogElement.style.padding = '20px';
+    dialogElement.style.borderRadius = '10px';
+    dialogElement.style.zIndex = '2000';
+    dialogElement.style.width = '400px';
+    dialogElement.style.textAlign = 'center';
+    dialogElement.style.border = '1px solid #444';
+    document.body.appendChild(dialogElement);
+  }
+  
+  // Set the content of the dialog
+  dialogElement.innerHTML = `
+    <h3 style="margin-top: 0;">You are about to open a pop-up to:</h3>
+    <p style="font-family: monospace; word-break: break-all; margin-bottom: 20px;">
+      https://solscan.io/account/${wallet.Account}
+    </p>
+    <p>Confirm? <span style="font-weight: bold;">Y</span> / <span style="font-weight: bold;">N</span></p>
+  `;
+  
+  // Show the dialog
+  dialogElement.style.display = 'block';
+  confirmationDialogVisible = true;
+}
+
+// Hide confirmation dialog
+function hideConfirmationDialog() {
+  const dialogElement = document.getElementById('confirmation-dialog');
+  if (dialogElement) {
+    dialogElement.style.display = 'none';
+  }
+  confirmationDialogVisible = false;
+}
+
+// Open Solscan URL
+function openSolscanUrl(walletAddress) {
+  const url = `https://solscan.io/account/${walletAddress}`;
+  window.open(url, '_blank');
+}
+
 // Handle keyboard input
 function onKeyDown(event) {
   // Toggle pause with Escape key
   if (event.key === 'Escape') {
+    // If confirmation dialog is open, close it
+    if (confirmationDialogVisible) {
+      hideConfirmationDialog();
+      return;
+    }
+    
+    // Otherwise toggle pause
     paused = !paused;
     const pauseIndicator = document.getElementById('pause-indicator');
     pauseIndicator.style.display = paused ? 'block' : 'none';
     controls.enabled = !paused;
+    return;
+  }
+  
+  // Handle interaction key (E)
+  if (event.key === 'e' || event.key === 'E') {
+    if (interactableWallet && !confirmationDialogVisible) {
+      // Play sound effect
+      playWalletSound(interactableWallet.type);
+      
+      // Show confirmation dialog
+      showConfirmationDialog(interactableWallet);
+    }
+    return;
+  }
+  
+  // Handle confirmation dialog responses
+  if (confirmationDialogVisible) {
+    // Confirm (Y key)
+    if (event.key === 'y' || event.key === 'Y') {
+      openSolscanUrl(interactableWallet.Account);
+      hideConfirmationDialog();
+    }
+    
+    // Cancel (N key)
+    if (event.key === 'n' || event.key === 'N') {
+      hideConfirmationDialog();
+    }
   }
 }
 
-// Check for hovering over wallet nodes
+// Check for hovering over wallet nodes and interaction
 function checkHover() {
-  if (paused) return;
+  if (paused || confirmationDialogVisible) return;
   
   // Update the raycaster
   raycaster.setFromCamera(mouse, camera);
@@ -409,7 +626,7 @@ function checkHover() {
   // Check for intersections with wallet nodes
   const intersects = raycaster.intersectObjects(walletNodes);
   
-  // If hovering over a node
+  // First handle hover effect
   if (intersects.length > 0) {
     const intersectedObject = intersects[0].object;
     const wallet = intersectedObject.userData.wallet;
@@ -445,6 +662,9 @@ function checkHover() {
       hoveredWallet = null;
     }
   }
+  
+  // Now check for interaction prompt
+  checkForWalletInteraction(intersects);
 }
 
 // Handle mouse movement for the auto-rotation feature
