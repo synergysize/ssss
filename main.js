@@ -63,7 +63,7 @@ function preloadSoundEffects() {
   // Preload fartcoin sound effects
   for (let i = 1; i <= 5; i++) {
     const paddedNum = i.toString().padStart(3, '0');
-    const audio = new Audio(`sound/fart-${paddedNum}.mp3`);
+    const audio = new Audio(`public/sound/fart-${paddedNum}.mp3`);
     audio.load();
     soundEffects.fartcoin.push(audio);
   }
@@ -71,7 +71,7 @@ function preloadSoundEffects() {
   // Preload goattoken sound effects
   for (let i = 1; i <= 5; i++) {
     const paddedNum = i.toString().padStart(3, '0');
-    const audio = new Audio(`sound/bahhh-${paddedNum}.mp3`);
+    const audio = new Audio(`public/sound/bahhh-${paddedNum}.mp3`);
     audio.load();
     soundEffects.goattoken.push(audio);
   }
@@ -457,6 +457,15 @@ function checkForWalletInteraction(intersects) {
   const intersectedObject = intersects[0].object;
   const wallet = intersectedObject.userData.wallet;
   
+  // Skip center orb interaction
+  if (intersectedObject === coreOrb || intersectedObject.parent === coreOrb) {
+    if (interactableWallet) {
+      interactableWallet = null;
+      hideInteractionPrompt();
+    }
+    return;
+  }
+  
   // Calculate dot product between camera direction and direction to wallet
   // This checks if we're looking directly at the wallet
   const cameraDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
@@ -491,14 +500,14 @@ function showInteractionPrompt() {
     promptElement = document.createElement('div');
     promptElement.id = 'interaction-prompt';
     promptElement.style.position = 'absolute';
-    promptElement.style.top = '50%';
+    promptElement.style.top = '55%'; // Position below center to avoid tooltip overlap
     promptElement.style.left = '50%';
-    promptElement.style.transform = 'translate(-50%, -50%)';
+    promptElement.style.transform = 'translate(-50%, 0)';
     promptElement.style.color = 'white';
-    promptElement.style.fontSize = '24px';
+    promptElement.style.fontSize = '20px';
     promptElement.style.fontWeight = 'bold';
     promptElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    promptElement.style.padding = '10px 20px';
+    promptElement.style.padding = '8px 16px';
     promptElement.style.borderRadius = '5px';
     promptElement.style.zIndex = '1000';
     document.body.appendChild(promptElement);
@@ -536,19 +545,17 @@ function showConfirmationDialog(wallet) {
     dialogElement.style.padding = '20px';
     dialogElement.style.borderRadius = '10px';
     dialogElement.style.zIndex = '2000';
-    dialogElement.style.width = '400px';
+    dialogElement.style.width = '450px';
     dialogElement.style.textAlign = 'center';
     dialogElement.style.border = '1px solid #444';
     document.body.appendChild(dialogElement);
   }
   
-  // Set the content of the dialog
+  // Set the content of the dialog using the exact format requested
   dialogElement.innerHTML = `
-    <h3 style="margin-top: 0;">You are about to open a pop-up to:</h3>
-    <p style="font-family: monospace; word-break: break-all; margin-bottom: 20px;">
-      https://solscan.io/account/${wallet.Account}
+    <p style="font-size: 16px; margin-bottom: 15px;">
+      You are about to open a pop-up to https://solscan.io/account/${wallet.Account}. Confirm? (Y/N)
     </p>
-    <p>Confirm? <span style="font-weight: bold;">Y</span> / <span style="font-weight: bold;">N</span></p>
   `;
   
   // Show the dialog
