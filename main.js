@@ -237,8 +237,8 @@ function createWalletVisualization() {
     const distanceFromOrigin = position.length();
     const maxDistance = 7000; // Adjust based on your scene scale
     
-    // Apply opacity based on distance using exponential falloff
-    const opacityValue = Math.max(0.1, 1 / (1 + Math.pow(distanceFromOrigin / maxDistance, 2)));
+    // Apply opacity based on distance using sharper exponential falloff (exponent increased from 2 to 3)
+    const opacityValue = Math.max(0.05, 1 / (1 + Math.pow(distanceFromOrigin / maxDistance, 3)));
     
     // Create mesh with opacity applied
     const nodeMaterial = material.clone();
@@ -383,9 +383,9 @@ function animate() {
       // Always rotate slightly for the swirling effect, but rotate faster when auto-rotating
       const baseRotationSpeed = isAutoRotating ? galaxyRotationSpeed * 2 : galaxyRotationSpeed;
       
-      // Add parallax spin effect with different rotation speeds for Y and Z axes
+      // Add parallax spin effect with matched rotation speeds for Y and Z axes
       galaxyObject.rotation.y += baseRotationSpeed * 2.5; // 0.0005
-      galaxyObject.rotation.z += baseRotationSpeed * 1.5; // 0.0003
+      galaxyObject.rotation.z += baseRotationSpeed * 2.5; // 0.0005 (increased from 0.0003)
     }
     
     // Animate the glow effect
