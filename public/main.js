@@ -786,15 +786,40 @@ function saveCountdownState() {
   }
 }
 
-// Format time as mm:ss
+// Format time as DD:HH:MM:SS
 function formatTime(milliseconds) {
-  if (milliseconds <= 0) return "00:00";
+  if (milliseconds <= 0) return "00:00:00:00";
   
   const totalSeconds = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
+  const days = Math.floor(totalSeconds / (24 * 60 * 60));
+  const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+  const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
   const seconds = totalSeconds % 60;
   
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Trigger a full-screen red flash
+function triggerRedFlash() {
+  // Create a full-screen red overlay
+  const flashOverlay = document.createElement('div');
+  flashOverlay.style.position = 'absolute';
+  flashOverlay.style.top = '0';
+  flashOverlay.style.left = '0';
+  flashOverlay.style.width = '100%';
+  flashOverlay.style.height = '100%';
+  flashOverlay.style.backgroundColor = 'red';
+  flashOverlay.style.opacity = '0.7';
+  flashOverlay.style.zIndex = '9999';
+  flashOverlay.style.pointerEvents = 'none';
+  
+  // Add it to the body
+  document.body.appendChild(flashOverlay);
+  
+  // Remove it after 250ms
+  setTimeout(() => {
+    document.body.removeChild(flashOverlay);
+  }, 250);
 }
 
 // Show countdown overlay
@@ -834,15 +859,17 @@ function updateCountdown() {
   }
 }
 
-// Start countdown (2 minutes from now)
+// Start countdown (until July 12, 2025 at 17:00 UTC)
 function startCountdown() {
   if (countdownActive) {
     console.log('Countdown already active, ignoring start request');
     return;
   }
   
-  // Set end time to 2 minutes from now
-  countdownEndTime = Date.now() + 2 * 60 * 1000;
+  // Set end time to July 12, 2025 at 17:00 UTC
+  // Create the target date (year, month[0-11], day, hour, minute, second)
+  const targetDate = new Date(Date.UTC(2025, 6, 12, 17, 0, 0)); // July is month 6 (0-indexed)
+  countdownEndTime = targetDate.getTime();
   countdownActive = true;
   
   // Show countdown and save state
@@ -895,10 +922,19 @@ function findCentralWhiteOrb() {
     
     sharedGroup.children.forEach(sprite => {
       if (sprite && sprite.position) {
-        const distanceToCenter = sprite.position.length();
-        if (distanceToCenter < closestDistance) {
-          closestDistance = distanceToCenter;
-          centralOrb = sprite;
+        // Verify the sprite has both types of tokens by checking its userData
+        const walletData = sprite.userData && sprite.userData.walletData;
+        const hasBothTokens = walletData && 
+                            ((walletData.fartAmount > 0 && walletData.goatAmount > 0) || 
+                             (walletData.fartcoinBalance > 0 && walletData.goatBalance > 0));
+        
+        if (hasBothTokens) {
+          const distanceToCenter = sprite.position.length();
+          if (distanceToCenter < closestDistance) {
+            closestDistance = distanceToCenter;
+            centralOrb = sprite;
+            console.log('Potential central white orb with userData:', sprite.userData);
+          }
         }
       }
     });
@@ -940,12 +976,15 @@ function checkCentralOrbProximity() {
   }
 }
 
-// Handle 'E' key press
+// Handle 'F' key press
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'e' || e.key === 'E') {
+  if (e.key === 'f' || e.key === 'F') {
     if (nearCentralOrb && facingCentralOrb && !countdownActive) {
       startCountdown();
       hideActivationPrompt();
+      
+      // Add red flash effect
+      triggerRedFlash();
     }
   }
 });
@@ -1377,9 +1416,9 @@ if (sharedPoints.length > 0 && fartcoinPoints.length > 0 && goatTokenPoints.leng
 const controlsElement = document.getElementById('controls');
 if (controlsElement) {
   if (controlType === 'Fly') {
-    controlsElement.innerHTML = 'WASD to move, drag mouse to look around<br>HOLD LEFT SHIFT to activate jetpack boost<br>Press E near central orb to activate countdown';
+    controlsElement.innerHTML = 'WASD to move, drag mouse to look around<br>HOLD LEFT SHIFT to activate jetpack boost<br>Press F near central orb to activate countdown';
   } else {
-    controlsElement.innerHTML = 'Drag to rotate, pinch to zoom<br>Press E near central orb to activate countdown';
+    controlsElement.innerHTML = 'Drag to rotate, pinch to zoom<br>Press F near central orb to activate countdown';
   }
 }
 

@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fractal Wallet Visualization</title>
+  <title>3D Blockchain Wallet Visualizer</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background-color: #000;
       font-family: Arial, sans-serif;
+      color: white;
     }
     canvas {
       display: block;
@@ -19,42 +20,30 @@
       z-index: 0;
       cursor: default !important;
     }
-    
-    #info {
+    #countdown-overlay {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Digital-7', monospace;
+      font-size: 36px;
+      font-weight: bold;
+      color: red;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+      z-index: 1000;
+      display: none;
+    }
+    #activation-prompt {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: bold;
       color: white;
-      z-index: 10;
-      background-color: rgba(0, 0, 0, 0.7);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-    
-    .legend {
-      margin-bottom: 10px;
-    }
-    
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-    
-    .color-box {
-      width: 15px;
-      height: 15px;
-      margin-right: 8px;
-      border-radius: 3px;
-    }
-    
-    .fartcoin {
-      background-color: #8A2BE2; /* Purple */
-    }
-    
-    .goattoken {
-      background-color: #FFA500; /* Orange */
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+      z-index: 1000;
+      display: none;
     }
     
     #controls {
@@ -139,45 +128,6 @@
     #contract-value {
       color: #88ccff;
     }
-    
-    /* Countdown Overlay Styles */
-    #countdown-overlay {
-      position: absolute;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Arial', sans-serif;
-      font-size: 60px;
-      font-weight: bold;
-      color: #ff2d2d; /* Bright red */
-      text-align: center;
-      z-index: 1000;
-      text-shadow: 0 0 15px rgba(255, 45, 45, 0.8), 0 0 10px rgba(255, 45, 45, 0.6), 0 0 5px rgba(255, 45, 45, 0.4), 0 2px 4px rgba(0, 0, 0, 0.8);
-      display: none;
-      user-select: none;
-      pointer-events: none;
-    }
-    
-    /* Activation Prompt */
-    #activation-prompt {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: 'Arial', sans-serif;
-      font-size: 24px;
-      font-weight: bold;
-      color: white;
-      background-color: rgba(0, 0, 0, 0.7);
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: 2px solid rgba(255, 255, 255, 0.5);
-      text-align: center;
-      z-index: 1000;
-      display: none;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-      box-shadow: 0 0 20px rgba(0, 100, 255, 0.5);
-    }
   </style>
 </head>
 <body>
@@ -185,7 +135,10 @@
 
   <div id="pause-indicator">PAUSED. PRESS ESC TO UNPAUSE</div>
   
-  <div id="controls">WASD to Move, Mouse to Look<br>ESC to Pause</div>
+  <div id="controls">WASD to Move, Mouse to Look<br>ESC to Pause<br>Press F near central orb to activate</div>
+  
+  <div id="countdown-overlay">DD:HH:MM:SS</div>
+  <div id="activation-prompt">Press F to Activate</div>
   
   <div id="wallet-tooltip">
     <div class="tooltip-title">Wallet Details</div>
@@ -202,22 +155,9 @@
     <hr style="border: 0.5px solid rgba(255, 255, 255, 0.3); margin: 5px 0;">
     Contract: <span id="contract-value">[insert contract address here]</span>
   </div>
-  
-  <!-- Countdown Overlay -->
-  <div id="countdown-overlay">00:00</div>
-  
-  <!-- Activation Prompt -->
-  <div id="activation-prompt">Press E to Activate</div>
-  
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
-        "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js",
-        "three/examples/jsm/controls/FlyControls.js": "https://unpkg.com/three@0.150.1/examples/jsm/controls/FlyControls.js"
-      }
-    }
-  </script>
-  <script type="module" src="/main.js"></script>
+
+  <!-- All script loading is handled through main.js -->
+  <script type="module" src="./main.js"></script>
+
 </body>
 </html>
